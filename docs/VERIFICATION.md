@@ -11,7 +11,7 @@ Executed in a clean Python 3.12.10 virtual environment with global `PYTHONPATH` 
 - `python -m compileall -q app scripts tests`: PASS;
 - `python scripts/apply_migrations.py --dry-run`: PASS;
 - `python -m unittest discover`: PASS;
-- tests executed: `578`.
+- tests executed: `579`.
 
 Warnings emitted by negative-path tests are expected: mocked network failures, missing optional legacy-DOC tools and simulated Telegram errors are asserted failure behavior.
 

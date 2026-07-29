@@ -82,6 +82,15 @@ class RevalidateDocumentsTest(unittest.TestCase):
         self.assertEqual(problem, "unsafe_storage_path")
         self.assertEqual(file_path, Path("C:/outside/file.pdf"))
 
+    def test_resolve_document_path_rejects_posix_absolute_path_on_windows(self) -> None:
+        file_path, problem = resolve_document_path(
+            Path("C:/safe/root"),
+            "/etc/passwd",
+        )
+
+        self.assertEqual(problem, "unsafe_storage_path")
+        self.assertEqual(file_path, Path("/etc/passwd"))
+
 
 if __name__ == "__main__":
     unittest.main()

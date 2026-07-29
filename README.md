@@ -8,7 +8,7 @@
 
 [![CI](https://github.com/pavel-logachev/ai-tender-radar/actions/workflows/quality.yml/badge.svg)](https://github.com/pavel-logachev/ai-tender-radar/actions/workflows/quality.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-2f3e73)](https://www.python.org/)
-[![Tests 578](https://img.shields.io/badge/tests-578-167c69)](docs/VERIFICATION.md)
+[![Tests 579](https://img.shields.io/badge/tests-579-167c69)](docs/VERIFICATION.md)
 [![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-6b5fd6)](LICENSE)
 
 AI Tender Radar is an independent production engineering project for procurement signal collection, bounded document acquisition, LLM lead triage, report generation and human feedback. The public repository contains the application core, contracts, migrations, tests and sanitized infrastructure examples. Production credentials, customer data, private operational history and raw vendor documentation are not included.
@@ -60,7 +60,7 @@ The clean-room public tree was exercised in an isolated Python 3.12 environment:
 - dependency resolution and `pip check`;
 - source compilation;
 - migration dry-run;
-- **578 unit and contract tests**;
+- **579 unit and contract tests**;
 - full-history secret scan;
 - public-boundary scan.
 

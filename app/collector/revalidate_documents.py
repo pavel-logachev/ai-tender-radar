@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 import zipfile
 
 from app.collector.download_validation import (
@@ -114,7 +114,11 @@ def resolve_document_path(app_dir: Path, storage_path: str | None) -> tuple[Path
         return None, "missing_file_on_disk"
 
     relative_path = Path(storage_path)
-    if relative_path.is_absolute():
+    if (
+        relative_path.is_absolute()
+        or PurePosixPath(storage_path).is_absolute()
+        or PureWindowsPath(storage_path).is_absolute()
+    ):
         return relative_path, "unsafe_storage_path"
 
     file_path = app_dir / relative_path
