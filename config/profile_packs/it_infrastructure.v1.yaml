@@ -1,0 +1,41 @@
+schema_version: profile-pack-v1
+profile_id: it-infrastructure
+version: 1
+display_name: IT-инфраструктура
+vertical_id: it_integrator
+status: shadow
+
+artifacts:
+  qualification_profile:
+    path: ../business_profile.yaml
+    content_sha256: 2e6142f71681b3aae19e05c7f27e3ca87ec790422a468e07d1e077ad9b796633
+  search_profile:
+    path: ../search_profile.yaml
+    content_sha256: 1a62409e26f139cfc63dbf5e3968931c9083f32d4b9cdecc5f7607e1ca9f1d22
+
+ai:
+  analyst_role: AI-пресейл-аналитик IT-интегратора
+  opportunity_goal: Найти подтвержденный повод для развития заказчика за пределами одной тендерной процедуры
+  buyer_roles:
+    - ИТ-директор
+    - Руководитель ИТ-инфраструктуры
+    - Руководитель информационной безопасности
+    - Технический заказчик
+  prompt_family: it-infrastructure-lead-v1
+  report_contract: customer-lead-report-v1
+
+evaluation:
+  mode: shadow_only
+  dataset_ref:
+  required_case_tags:
+    - normal
+    - boundary
+    - adversarial
+    - missing-data
+    - recovery
+
+delivery:
+  workflow_contract: sales-lead-v1
+  channels:
+    - telegram
+    - excel

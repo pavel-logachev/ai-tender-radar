@@ -1,0 +1,16 @@
+psycopg[binary]
+python-dotenv
+pydantic
+pydantic-settings
+requests
+httpx[socks]
+beautifulsoup4
+lxml
+python-docx
+openpyxl
+pymupdf
+python-telegram-bot
+pyyaml
+xlrd
+py7zr
+rarfile

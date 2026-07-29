@@ -1,0 +1,505 @@
+name: servers_storage_daily_search
+
+defaults:
+  days_back: 14
+  min_price: 500000
+  limit_full_per_query: 10
+  max_short_results_per_query: 50
+
+# Совместимость с app.pipeline.daily_run: старый daily runner читает top-level queries.
+days_back: 14
+min_price: 500000
+limit_full_per_query: 10
+queries:
+  - СХД
+  - система хранения данных
+  - системы хранения данных
+  - поставка системы хранения данных
+  - сервер
+  - серверное оборудование
+  - поставка серверов
+  - поставка серверного оборудования
+  - вычислительный комплекс
+
+groups:
+  core:
+    description: Stable daily core kept for compatibility.
+    packs:
+      - storage_basic
+      - servers_basic
+  daily_core:
+    description: Stable daily core after the storage_wide probe.
+    packs:
+      - storage_basic
+      - servers_basic
+  storage_weekly_probe:
+    description: Small weekly storage probe with focused packs only.
+    packs:
+      - storage_expansion_focused
+      - storage_data_center_focused
+      - storage_domestic_focused
+  servers_weekly_probe:
+    description: Small weekly server probe with focused packs only.
+    packs:
+      - servers_compute_focused
+      - servers_modernization_focused
+      - servers_workload_focused
+  servers_storage_weekly_probe:
+    description: Small weekly combined storage and server probe.
+    packs:
+      - storage_expansion_focused
+      - storage_data_center_focused
+      - storage_domestic_focused
+      - servers_compute_focused
+      - servers_modernization_focused
+      - servers_workload_focused
+  servers_storage_vendor_manual:
+    description: Manual vendor/model probe; not a daily group.
+    packs:
+      - storage_vendor_probe
+      - servers_vendor_probe
+  storage:
+    description: Compatibility alias; focused weekly storage probe plus basic storage.
+    packs:
+      - storage_basic
+      - storage_expansion_focused
+      - storage_data_center_focused
+      - storage_domestic_focused
+  servers:
+    description: Compatibility alias; focused weekly server probe plus basic servers.
+    packs:
+      - servers_basic
+      - servers_compute_focused
+      - servers_modernization_focused
+      - servers_workload_focused
+  extended:
+    description: Compatibility alias for a focused weekly probe; not daily.
+    packs:
+      - storage_basic
+      - servers_basic
+      - storage_expansion_focused
+      - storage_data_center_focused
+      - storage_domestic_focused
+      - servers_compute_focused
+      - servers_modernization_focused
+      - servers_workload_focused
+  servers_wide:
+    description: Heavy diagnostic/manual-only compatibility group; shortened to focused server packs after probe.
+    packs:
+      - servers_compute_focused
+      - servers_modernization_focused
+      - servers_workload_focused
+  storage_wide:
+    description: Heavy diagnostic/manual-only compatibility group; shortened to focused storage packs after probe.
+    packs:
+      - storage_expansion_focused
+      - storage_data_center_focused
+      - storage_domestic_focused
+  servers_vendor:
+    description: Compatibility manual vendor probe; prefer servers_storage_vendor_manual for combined vendor runs.
+    packs:
+      - servers_vendor_probe
+  storage_vendor:
+    description: Compatibility manual vendor probe; prefer servers_storage_vendor_manual for combined vendor runs.
+    packs:
+      - storage_vendor_probe
+  servers_storage_wide:
+    description: Heavy diagnostic/manual-only compatibility group; shortened to focused storage and server packs after probe.
+    packs:
+      - storage_expansion_focused
+      - storage_data_center_focused
+      - storage_domestic_focused
+      - servers_compute_focused
+      - servers_modernization_focused
+      - servers_workload_focused
+  servers_storage_vendor_probe:
+    description: Compatibility alias for manual vendor probe; prefer servers_storage_vendor_manual.
+    packs:
+      - storage_vendor_probe
+      - servers_vendor_probe
+  servers_storage_experiments:
+    description: Heavy diagnostic/manual-only experiments; not recommended as a working group.
+    packs:
+      - storage_expansion_focused
+      - storage_data_center_focused
+      - storage_domestic_focused
+      - servers_compute_focused
+      - servers_modernization_focused
+      - servers_workload_focused
+      - storage_exact_component_probe
+      - storage_vendor_probe
+      - servers_vendor_probe
+  all:
+    description: Compatibility diagnostic group; use daily_core, weekly probes, or vendor_manual instead.
+    packs:
+      - storage_basic
+      - servers_basic
+      - storage_expansion_focused
+      - storage_data_center_focused
+      - storage_domestic_focused
+      - servers_compute_focused
+      - servers_modernization_focused
+      - servers_workload_focused
+      - storage_vendor_probe
+      - storage_exact_component_probe
+      - servers_vendor_probe
+      - optional_network
+
+packs:
+  storage_basic:
+    description: Базовые запросы по СХД и системам хранения данных
+    queries:
+      - СХД
+      - система хранения данных
+      - системы хранения данных
+      - поставка системы хранения данных
+
+  storage_expansion_focused:
+    description: Focused weekly probe for СХД expansion and disk capacity.
+    queries:
+      - расширение системы хранения данных
+      - расширение СХД
+      - расширение дискового пространства
+      - комплект расширения дискового пространства
+      - полка расширения для СХД
+      - дисковый массив
+
+  storage_data_center_focused:
+    description: Focused weekly probe for data-center storage formulations.
+    queries:
+      - центр хранения и обработки данных
+      - хранение и обработка данных
+      - репозиторий данных
+      - программно-аппаратный комплекс хранения данных
+
+  storage_domestic_focused:
+    description: Focused weekly probe for Russian storage platforms.
+    queries:
+      - российская система хранения данных
+      - система хранения данных на российской платформе
+      - российская СХД
+
+  storage_extended:
+    description: Расширенные формулировки по модернизации и компонентам СХД
+    queries:
+      - расширение системы хранения данных
+      - модернизация системы хранения данных
+      - поставка дискового массива
+      - система хранения данных с дисковыми полками
+      - резервное хранилище данных
+
+  storage_supply_forms:
+    description: Разные формулировки поставки СХД
+    queries:
+      - СХД
+      - система хранения данных
+      - системы хранения данных
+      - поставка СХД
+      - поставка системы хранения данных
+      - поставка систем хранения данных
+      - приобретение системы хранения данных
+      - приобретение СХД
+      - закупка системы хранения данных
+      - закупка СХД
+      - хранилище данных
+      - оборудование хранения данных
+
+  storage_arrays:
+    description: Дисковые массивы и аппаратные хранилища
+    queries:
+      - дисковый массив
+      - дисковые массивы
+      - поставка дискового массива
+      - приобретение дискового массива
+      - массив хранения данных
+      - система дискового хранения
+      - система хранения с дисковыми полками
+      - дисковая система хранения
+      - аппаратное хранилище данных
+
+  storage_expansion:
+    description: Расширение СХД и дискового пространства
+    queries:
+      - расширение системы хранения данных
+      - расширение СХД
+      - расширение дискового пространства
+      - комплект расширения дискового пространства
+      - комплект расширения СХД
+      - полка расширения для СХД
+      - дисковая полка для СХД
+      - расширение дисковой полки
+      - модернизация системы хранения данных
+      - модернизация СХД
+      - дооснащение системы хранения данных
+
+  storage_backup_repository:
+    description: Хранилища для backup, репозитории и архивы
+    queries:
+      - резервное хранилище данных
+      - хранилище резервных копий
+      - репозиторий резервного копирования
+      - репозиторий данных
+      - резервное копирование хранилище
+      - система хранения резервных копий
+      - хранилище для резервного копирования
+      - архивное хранилище данных
+      - долговременное хранение данных
+      - центр хранения и обработки данных
+      - хранение и обработка данных
+
+  storage_hci_virtualization:
+    description: СХД в составе виртуализации, HCI и ЦОД
+    queries:
+      - СХД для виртуализации
+      - система хранения для виртуализации
+      - хранилище для виртуализации
+      - гиперконвергентная инфраструктура
+      - гиперконвергентный комплекс
+      - программно-аппаратный комплекс хранения данных
+      - программно-аппаратный комплекс виртуализации и хранения данных
+      - платформа виртуализации и хранения данных
+      - хранилище данных для ЦОД
+      - система хранения для ЦОД
+
+  storage_domestic_probe:
+    description: Российские СХД и импортозамещение хранения данных
+    queries:
+      - российская система хранения данных
+      - российская СХД
+      - отечественная система хранения данных
+      - отечественная СХД
+      - СХД на российской платформе
+      - система хранения данных на российской платформе
+      - система хранения из реестра
+      - СХД из реестра
+      - импортозамещение системы хранения данных
+      - импортозамещение СХД
+
+  storage_vendor_probe:
+    description: Manual vendor/model сигналы по СХД; not daily.
+    queries:
+      - OceanStor
+      - Huawei OceanStor
+      - Dorado
+      - Huawei Dorado
+      - OceanStor Dorado
+      - Fujitsu Eternus
+      - Eternus DX
+      - Eternus DX200
+      - YADRO TATLIN
+      - TATLIN
+      - TATLIN.FLEX
+      - Аэродиск
+      - Аэродиск Восток
+      - Аэродиск Яхонт
+      - RAIDIX
+      - Р-Хранилище
+      - Скала СХД
+      - DEPO Storage
+      - Aquarius storage
+
+  storage_exact_component_probe:
+    description: Компоненты СХД как probe, не daily core
+    queries:
+      - дисковая полка
+      - полка расширения
+      - накопители для СХД
+      - диски для СХД
+      - SSD для СХД
+      - SAS SSD для СХД
+      - модуль расширения для системы хранения данных
+      - контроллер СХД
+      - комплектующие для СХД
+
+  servers_basic:
+    description: Базовые запросы по серверам и серверному оборудованию
+    queries:
+      - сервер
+      - серверное оборудование
+      - поставка серверов
+      - поставка серверного оборудования
+      - вычислительный комплекс
+
+  servers_compute_focused:
+    description: Focused weekly probe for compute complexes and clusters.
+    queries:
+      - вычислительный комплекс
+      - высокопроизводительный вычислительный комплекс
+      - программно-вычислительный комплекс
+      - серверный комплекс
+      - вычислительный кластер
+
+  servers_modernization_focused:
+    description: Focused weekly probe for server modernization.
+    queries:
+      - модернизация серверного оборудования
+      - обновление серверного оборудования
+      - комплект модернизации сервера
+      - развитие серверной инфраструктуры
+
+  servers_workload_focused:
+    description: Focused weekly probe for application workloads.
+    queries:
+      - сервер для 1С
+      - сервер 1С
+      - сервер баз данных
+      - сервер для базы данных
+      - сервер для виртуализации
+      - сервер виртуализации
+      - сервер для информационной системы
+
+  servers_extended:
+    description: Расширенные формулировки по вычислительной инфраструктуре
+    queries:
+      - серверная платформа
+      - вычислительный узел
+      - кластер серверов
+      - модернизация серверного оборудования
+      - гиперконвергентная инфраструктура
+
+  servers_supply_forms:
+    description: Разные формулировки поставки серверов и серверного оборудования
+    queries:
+      - поставка сервера
+      - поставка серверов
+      - поставка серверного оборудования
+      - приобретение сервера
+      - приобретение серверов
+      - приобретение серверного оборудования
+      - закупка сервера
+      - закупка серверов
+      - сервер в сборе
+      - серверы в сборе
+      - серверный комплекс
+      - серверные комплексы
+
+  servers_compute_forms:
+    description: Вычислительные комплексы, узлы, кластеры
+    queries:
+      - вычислительный комплекс
+      - вычислительного комплекса
+      - высокопроизводительный вычислительный комплекс
+      - программно-вычислительный комплекс
+      - вычислительный узел
+      - вычислительные узлы
+      - серверный узел
+      - серверные узлы
+      - кластер серверов
+      - серверный кластер
+      - вычислительный кластер
+
+  servers_platforms:
+    description: Серверные платформы и barebone-формулировки
+    queries:
+      - серверная платформа
+      - серверные платформы
+      - серверная система
+      - серверные системы
+      - платформа серверная
+      - серверное шасси
+      - серверная корзина
+      - серверный корпус
+      - серверная материнская плата
+
+  servers_upgrade_modernization:
+    description: Модернизация и расширение серверной инфраструктуры
+    queries:
+      - модернизация серверного оборудования
+      - модернизация серверной инфраструктуры
+      - обновление серверного оборудования
+      - расширение серверного оборудования
+      - расширение серверной инфраструктуры
+      - дооснащение серверного оборудования
+      - комплект модернизации сервера
+      - комплект модернизации серверов
+      - развитие серверной инфраструктуры
+
+  servers_workload_probe:
+    description: Серверы под прикладные нагрузки
+    queries:
+      - сервер для 1С
+      - сервер 1С
+      - сервер баз данных
+      - сервер для базы данных
+      - сервер для виртуализации
+      - сервер виртуализации
+      - сервер для видеоконференцсвязи
+      - сервер для информационной системы
+      - сервер для государственной информационной системы
+      - сервер приложений
+
+  servers_domestic_probe:
+    description: Российские серверы и импортозамещение серверной инфраструктуры
+    queries:
+      - сервер на российской платформе
+      - серверное оборудование российского производства
+      - российский сервер
+      - российские серверы
+      - сервер из реестра российской промышленной продукции
+      - серверное оборудование из реестра
+      - сервер с российским процессором
+      - импортозамещение серверного оборудования
+
+  servers_vendor_probe:
+    description: Manual vendor/model сигналы по серверному оборудованию; not daily.
+    queries:
+      - DEPO сервер
+      - Aquarius сервер
+      - Аквариус сервер
+      - YADRO сервер
+      - KAYTUS сервер
+      - Kraftway сервер
+      - Fplus сервер
+      - Рикор сервер
+      - Норси-Транс сервер
+      - Dell PowerEdge
+      - HPE ProLiant
+      - HP ProLiant
+      - Lenovo ThinkSystem
+      - Huawei сервер
+      - FusionServer
+      - Supermicro сервер
+      - Inspur сервер
+
+  optional_network:
+    description: Опциональные сетевые запросы для расширения воронки
+    queries:
+      - коммутатор
+      - сетевое оборудование
+      - маршрутизатор
+      - межсетевой экран
+      - firewall
+
+documents:
+  limit_tenders: 50
+  limit_docs: 6
+
+text_extraction:
+  limit: 200
+
+document_risk:
+  limit_tenders: 50
+
+digest:
+  limit: 15
+  output_path: data/digests/latest.md
+
+llm:
+  enabled: false
+  limit: 5
+  max_spec_chars: 90000
+  max_other_chars: 12000
+  max_output_tokens: 4096
+
+api_limits:
+  z360:
+    search_requests_per_day: 100
+    full_order_requests_per_day: 500
+    document_requests_per_day: 5000
+
+collector_budget:
+  skip_existing_tenders: true
+  stop_on_429: true
+  recommended_rate_limit_seconds: 5
+  recommended_limit_full_per_query: 10
+  recommended_max_short_results_per_query: 50
