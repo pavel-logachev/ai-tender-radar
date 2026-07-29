@@ -67,13 +67,15 @@ The clean-room public tree was exercised in an isolated Python 3.12 environment:
 ```bash
 python -m venv .venv
 . .venv/bin/activate
-python -m pip install --upgrade pip
+python -m pip install \
+  --upgrade pip
 python -m pip install \
   -r requirements.lock
 python -m pip check
 python -m compileall -q \
   app scripts tests
-python scripts/apply_migrations.py \
+python \
+  scripts/apply_migrations.py \
   --dry-run
 python -m unittest discover
 ```
