@@ -59,7 +59,7 @@ The clean-room public tree was exercised in an isolated Python 3.12 environment:
 
 - dependency resolution and `pip check`;
 - source compilation;
-- migration dry-run;
+- migration dry-run and clean PostgreSQL bootstrap in CI;
 - **579 unit and contract tests**;
 - full-history secret scan;
 - public-boundary scan.
@@ -102,7 +102,7 @@ The checked-in YAML profiles are sanitized examples for an infrastructure procur
 - `app/platform/` — durable jobs, profile packs, contracts and versioning;
 - `app/evaluation/` — lead-triage evaluation;
 - `config/` — sanitized qualification and search profiles;
-- `database/` — schema and additive migration;
+- `database/` — checksum-bound legacy baseline and additive migrations;
 - `tests/` — unit, contract and failure-path coverage;
 - `tools/` — publication boundary and visual-asset tooling.
 
