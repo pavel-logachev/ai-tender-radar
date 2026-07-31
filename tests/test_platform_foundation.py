@@ -320,8 +320,10 @@ class MigrationContractTest(unittest.TestCase):
         directory = Path(__file__).resolve().parents[1] / "database" / "migrations"
         migrations = discover_migrations(directory)
 
-        self.assertEqual([item.version for item in migrations], ["0001"])
-        sql = migrations[0].sql.upper()
+        self.assertEqual([item.version for item in migrations], ["0000", "0001"])
+        legacy_schema = directory.parent.joinpath("schema.sql").read_text(encoding="utf-8")
+        self.assertEqual(migrations[0].sql, legacy_schema)
+        sql = migrations[1].sql.upper()
         self.assertIn("CREATE TABLE IF NOT EXISTS ANALYSIS_RUNS", sql)
         self.assertIn("CREATE TABLE IF NOT EXISTS JOBS", sql)
         self.assertIn("ATR_JSONB_CONTAINS_SECRET_KEY", sql)
