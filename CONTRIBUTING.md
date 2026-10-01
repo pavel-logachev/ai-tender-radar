@@ -1,23 +1,23 @@
-# Contributing
+# Как участвовать
 
-Contributions that improve correctness, safety, testability and source abstraction are welcome.
+Приветствуются изменения, которые повышают корректность, безопасность, тестируемость и независимость от источников данных.
 
-## Workflow
+## Порядок работы
 
-1. Create a focused branch.
-2. Add or update tests for the behavior being changed.
-3. Run the complete verification sequence from `README.md`.
-4. Keep fixtures synthetic and free of customer or supplier data.
-5. Explain operational and migration impact in the pull request.
+1. Создайте отдельную ветку под одну задачу.
+2. Добавьте или обновите тесты для изменяемого поведения.
+3. Выполните полную последовательность проверки из `README.md`.
+4. Держите тестовые данные синтетическими, без данных клиентов и поставщиков.
+5. В описании pull request объясните влияние на эксплуатацию и миграции.
 
-## Boundaries
+## Границы
 
-Do not contribute:
+Не добавляйте:
 
-- credentials, account identifiers or private endpoints;
-- downloaded procurement documents or real customer reports;
-- source-provider documentation that cannot be redistributed;
-- production profiles, chat IDs, logs or database dumps;
-- generated agent memory or unrelated commercial materials.
+- учётные данные, идентификаторы аккаунтов и закрытые адреса сервисов;
+- скачанные закупочные документы и реальные отчёты клиентов;
+- документацию поставщиков, которую нельзя распространять;
+- рабочие профили, идентификаторы чатов, журналы и дампы баз данных;
+- сгенерированную память агента и посторонние коммерческие материалы.
 
-New dependencies must include a license review and an update to `THIRD_PARTY_NOTICES.md`.
+Новые зависимости должны сопровождаться проверкой лицензии и обновлением `THIRD_PARTY_NOTICES.md`.

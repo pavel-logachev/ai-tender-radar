@@ -1,29 +1,29 @@
-# Security policy
+# Политика безопасности
 
-## Supported version
+## Поддерживаемая версия
 
-Security fixes are applied to the current `main` branch.
+Исправления безопасности вносятся в текущую ветку `main`.
 
-## Reporting a vulnerability
+## Как сообщить об уязвимости
 
-Do not open a public issue for credentials, access-control failures, SSRF, unsafe archive extraction, document parser issues, prompt-injection paths or data exposure.
+Не создавайте публичный issue, если речь об учётных данных, обходе контроля доступа, SSRF, небезопасной распаковке архивов, ошибках разбора документов, путях prompt-инъекции или раскрытии данных.
 
-Report privately through GitHub Security Advisories for this repository. Include:
+Сообщите приватно через GitHub Security Advisories этого репозитория. Укажите:
 
-- affected component;
-- minimal reproduction using synthetic data;
-- expected and observed behavior;
-- impact and suggested mitigation, if known.
+- затронутый компонент;
+- минимальное воспроизведение на синтетических данных;
+- ожидаемое и наблюдаемое поведение;
+- влияние и возможные меры защиты, если они вам известны.
 
-Never include production tokens, customer records, private tender documents or live service credentials in a report.
+Никогда не прикладывайте к сообщению рабочие токены, записи клиентов, закрытые закупочные документы и действующие учётные данные сервисов.
 
-## Security boundary
+## Граница безопасности
 
-The repository does not contain production credentials or data. Operators are responsible for:
+В репозитории нет рабочих учётных данных и данных. Эксплуатирующая сторона отвечает за то, чтобы:
 
-- using credentials only for sources they are authorized to access;
-- restricting Telegram recipients;
-- isolating document processing;
-- keeping PostgreSQL and provider endpoints private;
-- applying network egress controls and rate limits;
-- reviewing LLM output before commercial action.
+- использовать учётные данные только для источников, к которым есть право доступа;
+- ограничить круг получателей в Telegram;
+- изолировать обработку документов;
+- держать PostgreSQL и адреса провайдеров закрытыми;
+- применять ограничения исходящего трафика и лимиты запросов;
+- проверять результаты языковой модели до коммерческих действий.

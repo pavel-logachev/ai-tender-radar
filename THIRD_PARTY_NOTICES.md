@@ -1,18 +1,18 @@
-# Third-party notices
+# Уведомления о сторонних компонентах
 
-Runtime packages are pinned in `requirements.lock`. Their upstream licenses remain in force.
+Рабочие зависимости зафиксированы в `requirements.lock`. Лицензии их авторов остаются в силе.
 
-Notable license boundaries at publication time:
+Основные лицензионные границы на момент публикации:
 
-| Package group | License family | Note |
+| Группа пакетов | Семейство лицензий | Примечание |
 |---|---|---|
-| PyMuPDF | AGPL-3.0 or commercial | The public application is licensed under AGPL-3.0. |
-| psycopg / psycopg-binary | LGPL-3.0 | PostgreSQL client. |
-| python-telegram-bot | LGPL-3.0 | Telegram workflow adapter. |
-| py7zr and related archive packages | LGPL-2.1 or later | Archive processing. |
-| certifi | MPL-2.0 | CA certificate bundle. |
-| requests | Apache-2.0 | HTTP client. |
-| mcp (optional, `requirements-dev.txt`) | MIT | MCP SDK for the read-only snapshot broker and its tests. |
-| pydantic, httpx, openpyxl and most remaining packages | MIT/BSD/PSF-compatible | See each distribution for exact terms. |
+| PyMuPDF | AGPL-3.0 или коммерческая | Публичное приложение распространяется по AGPL-3.0. |
+| psycopg / psycopg-binary | LGPL-3.0 | Клиент PostgreSQL. |
+| python-telegram-bot | LGPL-3.0 | Адаптер рабочего процесса Telegram. |
+| py7zr и связанные пакеты архивов | LGPL-2.1 или новее | Обработка архивов. |
+| certifi | MPL-2.0 | Набор сертификатов удостоверяющих центров. |
+| requests | Apache-2.0 | HTTP-клиент. |
+| mcp (необязательно, `requirements-dev.txt`) | MIT | SDK MCP для брокера снимков только для чтения и его тестов. |
+| pydantic, httpx, openpyxl и большинство остальных пакетов | MIT/BSD/PSF-совместимые | Точные условия указаны в каждом дистрибутиве. |
 
-This file is a practical inventory, not a replacement for upstream license texts. Before redistributing a packaged application, regenerate the dependency inventory from the exact lockfile and retain all notices required by the package authors.
+Этот файл — практический перечень, а не замена текстов лицензий авторов. Перед распространением собранного приложения заново сформируйте перечень зависимостей по точному lock-файлу и сохраните все уведомления, которые требуют авторы пакетов.
