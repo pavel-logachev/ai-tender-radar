@@ -1,35 +1,35 @@
-# Publication boundary
+# Граница публикации
 
-This repository was created as a clean-room public root. It does not preserve the private production Git history.
+Репозиторий создан как публичный корень «с чистого листа». Закрытая история Git рабочей системы в нём не сохранена.
 
-## Included
+## Что включено
 
-- application Python source (`app/`) and the sanitized agent-first core (`agent_radar/`);
-- safe acquisition and document processing code;
-- LLM contracts and evaluation code;
-- Telegram/Excel workflow implementation;
-- additive database migration;
-- sanitized infrastructure search and qualification profiles;
-- synthetic tests and failure fixtures;
-- CI, security policy and architecture documentation.
+- исходный код приложения на Python (`app/`) и очищенное агентное ядро (`agent_radar/`);
+- код безопасной загрузки и обработки документов;
+- контракты языковой модели и код оценки;
+- реализация рабочего процесса Telegram/Excel;
+- аддитивная миграция базы данных;
+- очищенные профили поиска и квалификации для инфраструктурных закупок;
+- синтетические тесты и данные для проверки отказов;
+- CI, политика безопасности и документация по архитектуре.
 
-## Excluded
+## Что исключено
 
-- `.env` and all credential material;
-- production PostgreSQL data and dumps;
-- run logs and downloaded documents;
-- real procurement reports, contacts and feedback;
-- internal agent context, memory and generated graphs;
-- commercial target lists and GTM materials;
-- deployment aliases, private network configuration and rollback artifacts;
-- raw third-party API/Swagger snapshots;
-- provider connectors and licensed API clients;
-- customer research datasets, contact hints and any real person or organization contact data;
-- the production agent prompt and scoring playbook (a generic example prompt is included);
-- production agent runtime, container, gateway and egress-proxy configuration;
-- operational status and deployment-gate documents;
-- private production Git history.
+- `.env` и любые учётные данные;
+- рабочие данные PostgreSQL и их дампы;
+- журналы запусков и скачанные документы;
+- реальные закупочные отчёты, контакты и обратная связь;
+- внутренний контекст агента, его память и сгенерированные графы;
+- коммерческие списки целей и материалы для выхода на рынок;
+- псевдонимы развёртывания, конфигурация закрытой сети и артефакты отката;
+- сырые выгрузки API и Swagger сторонних сервисов;
+- коннекторы поставщиков и лицензируемые клиенты API;
+- данные исследований клиентов, подсказки по контактам и любые реальные контактные данные людей и организаций;
+- боевой промпт агента и правила оценки (в репозитории есть универсальный пример промпта);
+- рабочая среда выполнения агента, конфигурация контейнеров, шлюза и прокси исходящего трафика;
+- документы о рабочем статусе и проверках перед развёртыванием;
+- закрытая история Git рабочей системы.
 
-## Evidence policy
+## Политика доказательств
 
-Public screenshots and diagrams use synthetic records. Production claims are limited to read-only verification of the independently operated contour and do not disclose customer identities, lead counts, commercial conversion metrics or provider credentials.
+Публичные скриншоты и схемы используют синтетические записи. Утверждения о рабочей системе ограничены проверкой только для чтения самостоятельно эксплуатируемого контура и не раскрывают личности клиентов, число лидов, коммерческие показатели конверсии и учётные данные провайдеров.

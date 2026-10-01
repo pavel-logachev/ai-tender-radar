@@ -1,81 +1,81 @@
 <p align="center">
-  <img src="docs/assets/ai-tender-radar-banner.png" alt="AI Tender Radar — procurement intelligence pipeline" width="100%" />
+  <img src="docs/assets/ai-tender-radar-banner.png" alt="AI Tender Radar — конвейер закупочной аналитики" width="100%" />
 </p>
 
 # AI Tender Radar
 
-**Procurement intelligence pipeline that turns a noisy purchase feed into an auditable lead queue.**
+**Конвейер закупочной аналитики: превращает шумный поток закупок в проверяемую очередь лидов.**
 
 [![CI](https://github.com/pavel-logachev/ai-tender-radar/actions/workflows/quality.yml/badge.svg)](https://github.com/pavel-logachev/ai-tender-radar/actions/workflows/quality.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-2f3e73)](https://www.python.org/)
 [![Tests 767](https://img.shields.io/badge/tests-767-167c69)](docs/VERIFICATION.md)
 [![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-6b5fd6)](LICENSE)
 
-AI Tender Radar is an independent production engineering project for procurement signal collection, bounded document acquisition, LLM lead triage, report generation and human feedback. The public repository contains two layers: the original batch pipeline (`app/`) and the newer agent-first contour (`agent_radar/`) in which an agent works on immutable offline snapshots through read-only tools. It also contains contracts, migrations, tests and sanitized infrastructure examples. Production credentials, customer data, private operational history, provider connectors and the production prompt are not included.
+AI Tender Radar — самостоятельный производственный проект: сбор закупочных сигналов, ограниченная загрузка документов, отбор лидов языковой моделью, формирование отчётов и обратная связь от человека. Публичный репозиторий содержит два слоя: исходный пакетный конвейер (`app/`) и более новый агентный контур (`agent_radar/`), в котором агент работает с неизменяемыми офлайн-снимками через инструменты только для чтения. Здесь же лежат контракты, миграции, тесты и очищенные примеры инфраструктуры. Рабочие учётные данные, данные клиентов, закрытая история эксплуатации, коннекторы поставщиков и боевой промпт не публикуются.
 
-**Product case:** https://logachev.net/portfolio/tender-radar/
+**Кейс на сайте:** https://logachev.net/portfolio/tender-radar/
 
-## Product loop
+## Цикл продукта
 
-1. Collect and normalize procurement signals.
-2. Apply cheap safety gates and eliminate obvious noise.
-3. Use an LLM to triage candidates that deserve deeper work.
-4. Plan and execute bounded document acquisition with rate-limit protection.
-5. Validate and extract technical evidence before report generation.
-6. Deliver a lead queue to Telegram or Excel and capture human feedback.
+1. Собрать и привести к единому виду закупочные сигналы.
+2. Отсечь очевидный шум дешёвыми проверками безопасности.
+3. Поручить языковой модели отобрать кандидатов, которые заслуживают глубокой работы.
+4. Спланировать и выполнить ограниченную загрузку документов с защитой от лимитов.
+5. Проверить и извлечь технические доказательства до формирования отчёта.
+6. Доставить очередь лидов в Telegram или Excel и записать обратную связь человека.
 
 <p align="center">
   <picture>
     <source media="(max-width: 720px)" srcset="docs/assets/ai-tender-radar-product-mobile.png" />
-    <img src="docs/assets/ai-tender-radar-product.png" alt="Synthetic AI Tender Radar lead queue" width="100%" />
+    <img src="docs/assets/ai-tender-radar-product.png" alt="Очередь лидов AI Tender Radar на синтетических данных" width="100%" />
   </picture>
 </p>
 
-> The product image uses synthetic records. No production tenders, contacts, customer reports or credentials are published.
+> На картинке синтетические записи. Реальные закупки, контакты, отчёты клиентов и учётные данные не публикуются.
 
-## Agent-first contour
+## Агентный контур
 
-The production system moved from a scheduled pipeline to a persistent agent that never touches live sources or databases. The public core in `agent_radar/` shows how that boundary is built:
+В рабочей системе плановый конвейер дополнен постоянным агентом, который никогда не обращается к живым источникам и базам данных. Публичное ядро в `agent_radar/` показывает, как устроена эта граница:
 
-- **Immutable snapshots and bundles**: bounded, versioned, checksum-bound tender snapshots published as one visible offline bundle.
-- **Read-only MCP broker**: three scoped tools (`list_candidates`, `get_tender`, `read_document_chunk`); the process holds no source credentials and cannot download or publish.
-- **Offline document evidence**: bounded bytes-to-text extraction and archive handling with no filesystem extraction, no OCR and no external fetches; intended for a network-disabled worker.
-- **Reviewed suggestions**: strict evidence checks before an agent suggestion may be reviewed, manual decisions and durable delivery claims in a local store.
-- **Lead research agent**: an OpenAI-compatible agent loop with turn and cost budgets, web tools behind an SSRF guard with untrusted-content marking, and mechanical grounding that removes any phone, e-mail or name the agent never actually read.
-- **Delivery**: Telegram lead cards and a passive Excel workbook (inline strings and hyperlinks only, no formulas, macros or embeds).
+- **Неизменяемые снимки и пакеты**: ограниченные версионированные снимки закупок с контрольными суммами, которые публикуются как один видимый офлайн-пакет.
+- **Брокер MCP только для чтения**: три инструмента с ограниченными правами (`list_candidates`, `get_tender`, `read_document_chunk`); у процесса нет учётных данных источников, он не может ничего скачивать и публиковать.
+- **Документные доказательства офлайн**: ограниченное извлечение текста из байтов и обработка архивов без распаковки на диск, без OCR и без внешних запросов; рассчитано на рабочий процесс без доступа к сети.
+- **Проверяемые рекомендации**: строгая проверка доказательств перед тем, как рекомендацию агента можно рассматривать, ручные решения и учёт доставки в локальном хранилище.
+- **Агент исследования лидов**: цикл агента с OpenAI-совместимым API, лимитами по ходам и стоимости, веб-инструментами за защитой от SSRF с пометкой недоверенного содержимого и механической проверкой: из результата удаляются телефон, почта или имя, которых агент на самом деле не читал.
+- **Доставка**: карточки лидов в Telegram и пассивная книга Excel (только строки и гиперссылки, без формул, макросов и вложений).
 
-`agent_radar/lead_agent/prompt.md` is a generic example that documents the model contract. The production prompt, scoring rules, provider connectors and customer research data are intentionally not published. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+`agent_radar/lead_agent/prompt.md` — универсальный пример, описывающий контракт с моделью. Боевой промпт, правила оценки, коннекторы поставщиков и данные исследований клиентов намеренно не публикуются. См. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Why this is not a keyword scraper
+## Почему это не парсер по ключевым словам
 
-The code separates semantic work from deterministic execution:
+Код разделяет смысловую работу и детерминированное исполнение:
 
-- **LLM:** lead triage, document planning, evidence interpretation and customer-lead reporting;
-- **code:** collection, normalization, hard-noise gates, download limits, validation, retries, persistence, delivery and audit trails.
+- **языковая модель:** отбор лидов, планирование документов, трактовка доказательств и отчёт о клиентском лиде;
+- **код:** сбор, нормализация, отсечение явного шума, лимиты загрузки, проверки, повторные попытки, хранение, доставка и журнал аудита.
 
-Rules remain useful for safety and cheap filtering. They do not replace semantic analysis where the purchase subject, documents and commercial context require reasoning.
+Правила остаются полезными для безопасности и дешёвой фильтрации. Они не заменяют смысловой анализ там, где предмет закупки, документы и коммерческий контекст требуют рассуждения.
 
-## Architecture
+## Архитектура
 
-- **Sources** — bounded adapters, search profiles and normalized source records.
-- **Acquisition** — safe HTTP boundary, archive handling, format validation and `429` protection.
-- **Evidence** — document extraction, technical-spec detection and primary-document selection.
-- **Intelligence** — strict Pydantic contracts, provider boundary, triage evaluation and report generation.
-- **Workflow** — PostgreSQL state, idempotent jobs, Telegram queue, Excel export and feedback.
-- **Operations** — migrations, health checks, structured diagnostics and CI.
+- **Источники** — ограниченные адаптеры, поисковые профили и нормализованные записи источников.
+- **Получение данных** — безопасная HTTP-граница, обработка архивов, проверка форматов и защита от `429`.
+- **Доказательства** — извлечение текста документов, поиск технического задания и выбор основного документа.
+- **Аналитика** — строгие контракты Pydantic, граница провайдера, оценка отбора лидов и формирование отчётов.
+- **Рабочий процесс** — состояние в PostgreSQL, идемпотентные задания, очередь в Telegram, экспорт в Excel и обратная связь.
+- **Эксплуатация** — миграции, проверки состояния, структурированная диагностика и CI.
 
-See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the component boundaries and failure model.
+Границы компонентов и модель отказов — в [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Verification
+## Проверка
 
-The clean-room public tree was exercised in an isolated Python 3.12 environment:
+Чистое публичное дерево проверено в изолированном окружении Python 3.12:
 
-- dependency resolution and `pip check`;
-- source compilation;
-- migration dry-run and clean PostgreSQL bootstrap in CI;
-- **767 unit and contract tests** (10 platform-dependent tests are skipped on hosts without the required capability);
-- full-history secret scan;
-- public-boundary scan.
+- разрешение зависимостей и `pip check`;
+- компиляция исходников;
+- пробный прогон миграций и чистое разворачивание PostgreSQL в CI;
+- **767 модульных и контрактных тестов** (10 платформозависимых тестов пропускаются на системах без нужной возможности);
+- проверка всей истории на секреты;
+- проверка публичной границы.
 
 ```bash
 python -m venv .venv
@@ -93,59 +93,59 @@ python \
 python -m unittest discover
 ```
 
-Windows activation:
+Активация в Windows:
 
 ```text
 .venv\Scripts\activate
 ```
 
-The tests use mocks and synthetic fixtures. They do not require production credentials or live source access.
+Тесты используют заглушки и синтетические данные. Им не нужны рабочие учётные данные и доступ к живым источникам.
 
-## Configuration
+## Настройка
 
-Copy `.env.example` to `.env` and supply credentials only for services you are authorized to use. `.env` is ignored by Git.
+Скопируйте `.env.example` в `.env` и укажите учётные данные только для сервисов, к которым у вас есть доступ. `.env` не попадает в Git.
 
-The checked-in YAML profiles are sanitized examples for an infrastructure procurement vertical. They are not a production customer profile and do not contain customer contacts or private account data.
+Профили YAML в репозитории — очищенные примеры для вертикали закупок инфраструктуры. Это не рабочий профиль клиента, в них нет контактов клиентов и закрытых данных аккаунтов.
 
-## Repository map
+## Карта репозитория
 
-- `app/collector/` — source and document acquisition boundaries;
-- `app/llm/` — provider clients, contracts and report generation;
-- `app/pipeline/` — shortlist, preparation and orchestration;
-- `app/platform/` — durable jobs, profile packs, contracts and versioning;
-- `app/evaluation/` — lead-triage evaluation;
-- `agent_radar/` — agent-first contour: snapshots, bundles, read-only MCP broker, offline document evidence, reviewed suggestions, lead research agent, digest and Excel delivery;
-- `config/` — sanitized qualification and search profiles;
-- `database/` — checksum-bound legacy baseline and additive migrations;
-- `tests/` — unit, contract and failure-path coverage;
-- `tools/` — publication boundary and visual-asset tooling.
+- `app/collector/` — границы получения данных источников и документов;
+- `app/llm/` — клиенты провайдеров, контракты и формирование отчётов;
+- `app/pipeline/` — короткий список, подготовка и оркестрация;
+- `app/platform/` — долговечные задания, пакеты профилей, контракты и версионирование;
+- `app/evaluation/` — оценка отбора лидов;
+- `agent_radar/` — агентный контур: снимки, пакеты, брокер MCP только для чтения, документные доказательства офлайн, проверяемые рекомендации, агент исследования лидов, дайджест и доставка в Excel;
+- `config/` — очищенные профили квалификации и поиска;
+- `database/` — базовая схема с контрольными суммами и аддитивные миграции;
+- `tests/` — модульные и контрактные тесты, проверки путей отказа;
+- `tools/` — проверка публичной границы и инструменты для визуальных материалов.
 
-## Public boundary
+## Публичная граница
 
-This repository is a clean-room publication, not a mirror of the private production Git history. It intentionally excludes:
+Репозиторий создан «с чистого листа», это не зеркало закрытой истории Git. В него намеренно не входят:
 
-- credentials, tokens, chat IDs and proxy credentials;
-- production databases, run logs and downloaded documents;
-- real customer leads, reports, contacts and feedback;
-- internal agent memory, commercial/GTM materials and incident notes;
-- customer research datasets, contact hints and the production agent prompt;
-- provider connectors and licensed API clients;
-- production agent runtime, container and gateway configuration;
-- deployment host aliases and rollback artifacts;
-- raw third-party Swagger snapshots.
+- учётные данные, токены, идентификаторы чатов и данные прокси;
+- рабочие базы данных, журналы запусков и скачанные документы;
+- реальные лиды клиентов, отчёты, контакты и обратная связь;
+- внутренняя память агента, коммерческие материалы и заметки об инцидентах;
+- данные исследований клиентов, подсказки по контактам и боевой промпт агента;
+- коннекторы поставщиков и лицензируемые клиенты API;
+- рабочая среда выполнения агента, конфигурация контейнеров и шлюза;
+- псевдонимы хостов развёртывания и артефакты отката;
+- сырые выгрузки Swagger сторонних сервисов.
 
-The exact boundary is documented in [docs/PUBLICATION_BOUNDARY.md](docs/PUBLICATION_BOUNDARY.md).
+Точная граница описана в [docs/PUBLICATION_BOUNDARY.md](docs/PUBLICATION_BOUNDARY.md).
 
-## Status and limits
+## Статус и ограничения
 
-- The architecture is used by an independently operated production contour. The agent-first contour published here is a sanitized core: it runs offline on synthetic fixtures and needs a source connector of your own to process real procurement data.
-- This repository is not a hosted SaaS and does not expose the production environment.
-- Source access depends on the terms and credentials of the selected procurement provider.
-- Search and qualification profiles must be validated for each business vertical.
-- LLM outputs require contracts, evidence checks and human review; they are not procurement or legal advice.
+- Архитектура используется в самостоятельно эксплуатируемом рабочем контуре. Опубликованный здесь агентный контур — очищенное ядро: оно работает офлайн на синтетических данных, а для обработки реальных закупок нужен собственный коннектор источника.
+- Репозиторий — не облачный сервис и не открывает доступ к рабочему окружению.
+- Доступ к источникам зависит от условий и учётных данных выбранного поставщика закупок.
+- Профили поиска и квалификации нужно проверять для каждой отрасли.
+- Результаты языковой модели требуют контрактов, проверки доказательств и контроля человека; это не закупочная и не юридическая консультация.
 
-## License
+## Лицензия
 
-Application code in this public repository is licensed under [GNU AGPL v3](LICENSE). This choice is compatible with the published PyMuPDF-backed extraction path. Dependency licenses are summarized in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Код приложения в этом публичном репозитории распространяется по [GNU AGPL v3](LICENSE). Этот выбор совместим с опубликованным путём извлечения текста на PyMuPDF. Лицензии зависимостей собраны в [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-Security reports: [SECURITY.md](SECURITY.md). Contributions: [CONTRIBUTING.md](CONTRIBUTING.md).
+Сообщения об уязвимостях: [SECURITY.md](SECURITY.md). Как участвовать: [CONTRIBUTING.md](CONTRIBUTING.md).

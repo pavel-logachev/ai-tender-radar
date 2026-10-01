@@ -78,11 +78,11 @@ def render_banner() -> None:
     grid(draw, size, 48)
     draw.rectangle((0, 0, 12, size[1]), fill=VIOLET)
     draw.rectangle((12, 0, 16, size[1]), fill=GREEN)
-    tracking(draw, (84, 44), "PROCUREMENT INTELLIGENCE / PYTHON", font(18), MUTED, 2)
+    tracking(draw, (84, 44), "ЗАКУПОЧНАЯ АНАЛИТИКА / PYTHON", font(18), MUTED, 2)
     draw.text((80, 104), "AI Tender Radar", font=font(65), fill=WHITE)
-    draw.text((84, 194), "FROM PROCUREMENT NOISE TO AN AUDITABLE LEAD QUEUE.", font=font(23), fill=CYAN)
-    draw.text((84, 248), "Collect / validate evidence / triage / report / learn", font=font(21), fill=MUTED)
-    for index, (label, color) in enumerate([("SOURCE", VIOLET), ("DOCS", AMBER), ("AI", GREEN), ("ACTION", CYAN)]):
+    draw.text((84, 194), "ОТ ЗАКУПОЧНОГО ШУМА — К ПРОВЕРЯЕМОЙ ОЧЕРЕДИ ЛИДОВ.", font=font(23), fill=CYAN)
+    draw.text((84, 248), "Сбор / проверка доказательств / отбор / отчёт / обучение", font=font(21), fill=MUTED)
+    for index, (label, color) in enumerate([("ИСТОЧНИК", VIOLET), ("ДОКУМЕНТЫ", AMBER), ("ИИ", GREEN), ("ДЕЙСТВИЕ", CYAN)]):
         x = 84 + index * 180
         draw.rounded_rectangle((x, 328, x + 150, 370), radius=19, fill=INK_2, outline=color, width=2)
         tracking(draw, (x + 18, 339), label, font(14), color, 1)
@@ -99,12 +99,12 @@ def render_social() -> None:
     grid(draw, size, 54, 72)
     draw.rectangle((0, 0, 12, size[1]), fill=VIOLET)
     draw.rectangle((12, 0, 16, size[1]), fill=GREEN)
-    tracking(draw, (84, 62), "PRODUCTION ENGINEERING / PROCUREMENT", font(18), MUTED, 2)
+    tracking(draw, (84, 62), "ПРОИЗВОДСТВЕННАЯ ИНЖЕНЕРИЯ / ЗАКУПКИ", font(18), MUTED, 2)
     draw.text((80, 148), "AI Tender", font=font(76), fill=WHITE)
     draw.text((80, 232), "Radar", font=font(76), fill=WHITE)
-    draw.text((84, 360), "Bounded acquisition. Evidence-first AI.", font=font(26), fill=CYAN)
-    draw.text((84, 404), "Auditable lead workflow.", font=font(26), fill=CYAN)
-    tracking(draw, (84, 548), "COLLECT / TRIAGE / REPORT / FEEDBACK", font(16), MUTED, 2)
+    draw.text((84, 360), "Ограниченная загрузка. ИИ на доказательствах.", font=font(26), fill=CYAN)
+    draw.text((84, 404), "Проверяемая работа с лидами.", font=font(26), fill=CYAN)
+    tracking(draw, (84, 548), "СБОР / ОТБОР / ОТЧЁТ / ОБРАТНАЯ СВЯЗЬ", font(16), MUTED, 2)
     radar(draw, (1004, 322), 198)
     image = Image.alpha_composite(image, noise(size)).convert("RGB")
     image.save(OUT / "ai-tender-radar-social-preview.png", optimize=True, quality=94)
@@ -126,18 +126,18 @@ def render_product() -> None:
     draw.rectangle((0, 0, size[0], 176), fill=INK)
     draw.rectangle((0, 0, 12, size[1]), fill=VIOLET)
     draw.rectangle((12, 0, 16, size[1]), fill=GREEN)
-    tracking(draw, (72, 36), "SYNTHETIC PRODUCT EVIDENCE", font(17), MUTED, 2)
-    draw.text((68, 78), "A lead queue with traceable evidence", font=font(43), fill=WHITE)
+    tracking(draw, (72, 36), "СИНТЕТИЧЕСКИЕ ДАННЫЕ ПРОДУКТА", font(17), MUTED, 2)
+    draw.text((68, 78), "Очередь лидов с прослеживаемыми доказательствами", font=font(43), fill=WHITE)
 
-    columns = [(76, "SIGNAL"), (330, "DOCUMENTS"), (664, "AI TRIAGE"), (1038, "NEXT ACTION")]
+    columns = [(76, "СИГНАЛ"), (330, "ДОКУМЕНТЫ"), (664, "ОТБОР ИИ"), (1038, "СЛЕДУЮЩИЙ ШАГ")]
     for x, title in columns:
         tracking(draw, (x, 222), title, font(16), "#66708B", 2)
     draw.line((68, 258, 1372, 258), fill=PAPER_LINE, width=2)
 
     rows = [
-        ("TR-2401", "Storage platform", "Technical spec + contract", "GO / high evidence", "Prepare discovery call", GREEN),
-        ("TR-2402", "Server refresh", "Specification selected", "MAYBE / clarify scope", "Ask 3 technical questions", AMBER),
-        ("TR-2403", "License renewal", "No hardware evidence", "NO-GO / service noise", "Keep out of lead queue", VIOLET),
+        ("TR-2401", "Система хранения", "ТЗ и контракт", "В РАБОТУ / есть доказательства", "Подготовить звонок", GREEN),
+        ("TR-2402", "Обновление серверов", "Выбрано ТЗ", "ВОЗМОЖНО / уточнить объём", "Задать 3 технических вопроса", AMBER),
+        ("TR-2403", "Продление лицензий", "Нет данных об оборудовании", "ОТКАЗ / сервисный шум", "Не включать в очередь", VIOLET),
     ]
     for index, (record, subject, docs, triage, action, color) in enumerate(rows):
         top = 286 + index * 168
@@ -147,12 +147,12 @@ def render_product() -> None:
         draw.text((330, top + 34), docs, font=font(18), fill=PAPER_INK)
         badge(draw, 664, top + 26, triage, color)
         draw.text((1038, top + 34), action, font=font(18), fill=PAPER_INK)
-        draw.text((330, top + 72), "validated • bounded download", font=font(15), fill="#7A849D")
-        draw.text((664, top + 76), "contract + reason + evidence refs", font=font(15), fill="#7A849D")
-        draw.text((1038, top + 72), "human feedback retained", font=font(15), fill="#7A849D")
+        draw.text((330, top + 72), "проверено • ограниченная загрузка", font=font(15), fill="#7A849D")
+        draw.text((664, top + 76), "контракт, причина, ссылки", font=font(15), fill="#7A849D")
+        draw.text((1038, top + 72), "обратная связь сохранена", font=font(15), fill="#7A849D")
 
     draw.line((68, 828, 1372, 828), fill=PAPER_LINE, width=2)
-    tracking(draw, (68, 850), "BOUNDED ACQUISITION / STRICT CONTRACTS / HUMAN FEEDBACK", font(15), PAPER_INK, 2)
+    tracking(draw, (68, 850), "ОГРАНИЧЕННАЯ ЗАГРУЗКА / СТРОГИЕ КОНТРАКТЫ / ОБРАТНАЯ СВЯЗЬ", font(15), PAPER_INK, 2)
     image.save(OUT / "ai-tender-radar-product.png", optimize=True, quality=94)
 
 
@@ -163,14 +163,14 @@ def render_product_mobile() -> None:
     draw.rectangle((0, 0, size[0], 210), fill=INK)
     draw.rectangle((0, 0, 10, size[1]), fill=VIOLET)
     draw.rectangle((10, 0, 14, size[1]), fill=GREEN)
-    tracking(draw, (48, 36), "SYNTHETIC PRODUCT EVIDENCE", font(16), MUTED, 2)
-    draw.text((46, 84), "Traceable evidence", font=font(42), fill=WHITE)
-    draw.text((48, 144), "from signal to action", font=font(30), fill=CYAN)
+    tracking(draw, (48, 36), "СИНТЕТИЧЕСКИЕ ДАННЫЕ ПРОДУКТА", font(16), MUTED, 2)
+    draw.text((46, 84), "Прослеживаемые доказательства", font=font(42), fill=WHITE)
+    draw.text((48, 144), "от сигнала до действия", font=font(30), fill=CYAN)
 
     rows = [
-        ("TR-2401", "Storage platform", "Technical spec + contract", "GO / high evidence", "Prepare discovery call", GREEN),
-        ("TR-2402", "Server refresh", "Specification selected", "MAYBE / clarify scope", "Ask 3 technical questions", AMBER),
-        ("TR-2403", "License renewal", "No hardware evidence", "NO-GO / service noise", "Keep out of lead queue", VIOLET),
+        ("TR-2401", "Система хранения", "ТЗ и контракт", "В РАБОТУ / есть доказательства", "Подготовить звонок", GREEN),
+        ("TR-2402", "Обновление серверов", "Выбрано ТЗ", "ВОЗМОЖНО / уточнить объём", "Задать 3 технических вопроса", AMBER),
+        ("TR-2403", "Продление лицензий", "Нет данных об оборудовании", "ОТКАЗ / сервисный шум", "Не включать в очередь", VIOLET),
     ]
     for index, (record, subject, docs, triage, action, color) in enumerate(rows):
         top = 246 + index * 294
@@ -180,10 +180,10 @@ def render_product_mobile() -> None:
         badge(draw, 64, top + 106, triage, color, face_size=20)
         draw.text((64, top + 158), docs, font=font(20), fill=PAPER_INK)
         draw.text((64, top + 194), action, font=font(20), fill=PAPER_INK)
-        draw.text((540, top + 208), "feedback retained", font=font(14), fill="#7A849D")
+        draw.text((540, top + 208), "обратная связь сохранена", font=font(14), fill="#7A849D")
 
     draw.line((40, 1152, 760, 1152), fill=PAPER_LINE, width=2)
-    tracking(draw, (40, 1182), "BOUNDED / AUDITABLE / HUMAN-REVIEWED", font(15), PAPER_INK, 1)
+    tracking(draw, (40, 1182), "ОГРАНИЧЕНО / ПРОВЕРЯЕМО / ПОД КОНТРОЛЕМ ЧЕЛОВЕКА", font(15), PAPER_INK, 1)
     image.save(OUT / "ai-tender-radar-product-mobile.png", optimize=True, quality=94)
 
 
@@ -192,4 +192,4 @@ if __name__ == "__main__":
     render_social()
     render_product()
     render_product_mobile()
-    print("Rendered AI Tender Radar GitHub assets")
+    print("Картинки AI Tender Radar для GitHub нарисованы")

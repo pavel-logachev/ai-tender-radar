@@ -1,13 +1,13 @@
-# Provenance
+# Происхождение
 
-This public repository was assembled on 2026-07-29 from an independently developed private AI Tender Radar codebase owned by Pavel Logachev.
+Этот публичный репозиторий собран 29.07.2026 из независимо разработанной закрытой кодовой базы AI Tender Radar, принадлежащей Павлу Логачёву.
 
-The application source, tests, sanitized profiles and migration were copied from private revision `693b7df` into a new clean-room Git root. Private Git history, production configuration, operational data, internal agent context and third-party API documentation were not copied.
+Исходный код приложения, тесты, очищенные профили и миграция скопированы из закрытой ревизии `693b7df` в новый корень Git «с чистого листа». Закрытая история Git, рабочая конфигурация, эксплуатационные данные, внутренний контекст агента и документация API сторонних сервисов не копировались.
 
-Publication-specific README, policies, boundary checks and visual assets were authored for this public root. Product images contain synthetic records only.
+README, политики, проверки границы и визуальные материалы для публикации созданы специально для этого корня. На картинках продукта только синтетические записи.
 
-## Update 2026-10-01
+## Обновление 01.10.2026
 
-The `app/` sources were refreshed and the sanitized agent-first core (`agent_radar/`) was added from private revision `655c141`. Provider connectors, customer research datasets, the production prompt, production agent runtime configuration and operational status documents were not copied. Test fixtures were reviewed and rewritten to contain only synthetic names, phone numbers, e-mail addresses and domains. The generic `agent_radar/lead_agent/prompt.md` was written for this public root.
+Исходники `app/` обновлены, очищенное агентное ядро (`agent_radar/`) добавлено из закрытой ревизии `655c141`. Коннекторы поставщиков, наборы данных исследований клиентов, боевой промпт, рабочая конфигурация среды выполнения агента и документы о рабочем статусе не копировались. Тестовые данные проверены и переписаны так, чтобы содержать только синтетические имена, телефоны, адреса почты и домены. Универсальный `agent_radar/lead_agent/prompt.md` написан для этого публичного корня.
 
-Copyright © 2026 Pavel Logachev.
+© 2026 Павел Логачёв.

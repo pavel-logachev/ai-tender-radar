@@ -1,32 +1,32 @@
-# Verification record
+# Протокол проверки
 
-Date: 2026-10-01
+Дата: 01.10.2026
 
-## Public tree
+## Публичное дерево
 
-Executed in a clean Python 3.12.10 virtual environment with global `PYTHONPATH` cleared:
+Выполнено в чистом виртуальном окружении Python 3.12.10 с очищенным глобальным `PYTHONPATH`:
 
 - `pip install -r requirements.lock`: PASS;
 - `pip check`: PASS;
 - `python -m compileall -q app agent_radar scripts tests`: PASS;
 - `python scripts/apply_migrations.py --dry-run`: PASS;
 - `python -m unittest discover`: PASS;
-- tests executed: `767` (10 skipped: POSIX file-mode and symlink checks on Windows, optional 7zip backend, Linux-only no-replace path);
-- public-boundary scan (`tools/check_public_boundary.py`): PASS, 0 findings.
+- выполнено тестов: `767` (10 пропущено: проверки режимов файлов POSIX и символических ссылок в Windows, необязательный бэкенд 7zip, путь без замены только для Linux);
+- проверка публичной границы (`tools/check_public_boundary.py`): PASS, 0 находок.
 
-Warnings emitted by negative-path tests are expected: mocked network failures, missing optional legacy-DOC tools and simulated Telegram errors are asserted failure behavior.
+Предупреждения от тестов негативных сценариев ожидаемы: имитированные сбои сети, отсутствующие необязательные инструменты для старых DOC и смоделированные ошибки Telegram — это проверяемое поведение при отказах.
 
-## Production evidence
+## Подтверждение по рабочей системе
 
-A read-only check of the independent production contour was recorded on 2026-07-29 for the original batch pipeline:
+Проверка только для чтения самостоятельно эксплуатируемого рабочего контура записана 29.07.2026 для исходного пакетного конвейера:
 
-- scheduled timer active;
-- latest scheduled service result `success` with exit status `0`;
-- PostgreSQL, network boundary and Telegram workflow containers running;
-- restart count `0` for all three checked services.
+- плановый таймер активен;
+- последний плановый запуск сервиса завершился успешно (`success`), код выхода `0`;
+- контейнеры PostgreSQL, сетевой границы и рабочего процесса Telegram запущены;
+- счётчик перезапусков `0` для всех трёх проверенных сервисов.
 
-No production records, credentials, hostnames or customer metrics are included in this repository.
+В репозитории нет рабочих записей, учётных данных, имён хостов и клиентских показателей.
 
-## Security
+## Безопасность
 
-The private source history scanner reported three credential-URL pattern matches. All three were verified as synthetic negative-test fixtures. In the clean-room public tree those fixture URLs are assembled at runtime so generic scanners do not misclassify them as leaked credentials. The new public history was then scanned independently with zero findings.
+Сканер закрытой истории исходников выдал три совпадения с шаблоном URL с учётными данными. Все три проверены: это синтетические данные негативных тестов. В чистом публичном дереве такие URL собираются во время выполнения, чтобы универсальные сканеры не принимали их за утёкшие учётные данные. Новая публичная история затем была независимо просканирована: находок нет.
