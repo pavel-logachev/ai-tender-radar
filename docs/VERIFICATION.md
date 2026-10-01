@@ -1,6 +1,6 @@
 # Verification record
 
-Date: 2026-07-29
+Date: 2026-10-01
 
 ## Public tree
 
@@ -8,16 +8,17 @@ Executed in a clean Python 3.12.10 virtual environment with global `PYTHONPATH` 
 
 - `pip install -r requirements.lock`: PASS;
 - `pip check`: PASS;
-- `python -m compileall -q app scripts tests`: PASS;
+- `python -m compileall -q app agent_radar scripts tests`: PASS;
 - `python scripts/apply_migrations.py --dry-run`: PASS;
 - `python -m unittest discover`: PASS;
-- tests executed: `579`.
+- tests executed: `767` (10 skipped: POSIX file-mode and symlink checks on Windows, optional 7zip backend, Linux-only no-replace path);
+- public-boundary scan (`tools/check_public_boundary.py`): PASS, 0 findings.
 
 Warnings emitted by negative-path tests are expected: mocked network failures, missing optional legacy-DOC tools and simulated Telegram errors are asserted failure behavior.
 
 ## Production evidence
 
-A read-only check of the independent production contour confirmed on 2026-07-29:
+A read-only check of the independent production contour was recorded on 2026-07-29 for the original batch pipeline:
 
 - scheduled timer active;
 - latest scheduled service result `success` with exit status `0`;

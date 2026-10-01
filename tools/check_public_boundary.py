@@ -17,7 +17,17 @@ FORBIDDEN_PARTS = {
     "logs",
     "output",
 }
-FORBIDDEN_NAMES = {"AGENTS.md", "docker-compose.yml", "sing-box.json"}
+FORBIDDEN_NAMES = {
+    "AGENTS.md",
+    "docker-compose.yml",
+    "sing-box.json",
+    "prompt_ru.md",
+    "PRODUCTION_STATUS.md",
+    "DEPLOYMENT_GATES.md",
+    "customer_contact_hints.json",
+    "customer_contact_hints_extra.json",
+    "customer_contact_hints_research.json",
+}
 FORBIDDEN_NAME_MARKERS = {".bak", ".fix", ".inline_", ".menu_", ".repair"}
 TEXT_SUFFIXES = {
     "",
@@ -47,6 +57,8 @@ PATTERNS = {
     "internal-host-alias": re.compile(r"pavel-production-vps", re.IGNORECASE),
     "production-ip": re.compile(r"\b194\.87\.101\.107\b"),
     "private-domain-email": re.compile(r"\b[^\s@]+@logachev\.net\b", re.IGNORECASE),
+    "provider-host": re.compile(r"\bbidzaar\.com\b", re.IGNORECASE),
+    "production-agent-runtime": re.compile(r"atr-hermes|hermes_gateway|compose\.hermes", re.IGNORECASE),
 }
 
 findings: list[tuple[str, str]] = []

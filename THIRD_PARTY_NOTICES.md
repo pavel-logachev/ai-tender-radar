@@ -12,6 +12,7 @@ Notable license boundaries at publication time:
 | py7zr and related archive packages | LGPL-2.1 or later | Archive processing. |
 | certifi | MPL-2.0 | CA certificate bundle. |
 | requests | Apache-2.0 | HTTP client. |
+| mcp (optional, `requirements-dev.txt`) | MIT | MCP SDK for the read-only snapshot broker and its tests. |
 | pydantic, httpx, openpyxl and most remaining packages | MIT/BSD/PSF-compatible | See each distribution for exact terms. |
 
 This file is a practical inventory, not a replacement for upstream license texts. Before redistributing a packaged application, regenerate the dependency inventory from the exact lockfile and retain all notices required by the package authors.

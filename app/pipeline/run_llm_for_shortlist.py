@@ -2101,6 +2101,9 @@ def operational_lead_report_exists_for_candidate(
     if row_result is not None:
         return result_has_report(row_result)
 
+    if "operational_lead_report_analysis_type" in row:
+        return False
+
     return analysis_result_exists_for_candidate(
         row,
         LEAD_LLM_REPORT_ANALYSIS_TYPE,
@@ -2123,6 +2126,13 @@ def has_llm_report_for_kind(
     row_result = row_report_result_for_analysis_type(row, analysis_type)
     if row_result is not None:
         return result_has_report(row_result)
+
+    if (
+        kind == REPORT_KIND_LEAD
+        and analysis_type == LEAD_LLM_REPORT_ANALYSIS_TYPE
+        and "operational_lead_report_analysis_type" in row
+    ):
+        return False
 
     return analysis_result_exists_for_candidate(
         row,
@@ -3934,9 +3944,19 @@ def lead_go_waiting_for_full_report(row: dict[str, Any]) -> bool:
     ):
         return False
 
+    has_embedded_triage_snapshot = any(
+        key in row
+        for key in (
+            "lead_triage_result",
+            "llm_customer_lead_triage_result",
+            "lead_triage_analysis_type",
+        )
+    )
     lookups = lead_triage_result_lookups_for_candidate(
         row,
-        include_db_lookup=has_stable_tender_identity,
+        include_db_lookup=(
+            has_stable_tender_identity and not has_embedded_triage_snapshot
+        ),
     )
     lookup = lookups[0] if lookups else None
     if not lookup:
@@ -3981,6 +4001,50 @@ def lead_triage_lookup_is_fresh(
 
     ttl_seconds = max(0.0, ttl_hours) * 60 * 60
     return (current_time - created_at).total_seconds() <= ttl_seconds
+
+
+def lead_triage_selection_skip_reason(
+    row: dict[str, Any],
+    *,
+    ttl_hours: float,
+    include_maybe_leads: bool,
+    force_lead_triage: bool,
+    now: datetime | None = None,
+) -> str | None:
+    if force_lead_triage:
+        return None
+
+    has_embedded_triage_snapshot = any(
+        key in row
+        for key in (
+            "lead_triage_result",
+            "llm_customer_lead_triage_result",
+            "lead_triage_analysis_type",
+        )
+    )
+    has_stable_tender_identity = bool(row.get("tender_id") or row.get("id"))
+    lookups = lead_triage_result_lookups_for_candidate(
+        row,
+        include_db_lookup=(
+            has_stable_tender_identity and not has_embedded_triage_snapshot
+        ),
+    )
+    for lookup in lookups:
+        if not lead_triage_lookup_is_fresh(
+            lookup,
+            ttl_hours=ttl_hours,
+            now=now,
+        ):
+            continue
+        if lead_triage_requires_full_report(
+            row,
+            lookup.triage,
+            include_maybe_leads=include_maybe_leads,
+        ):
+            return None
+        return "lead_triage_fresh_non_actionable"
+
+    return None
 
 
 def print_lead_triage_stale_reuse_ignored(
@@ -4284,134 +4348,178 @@ def select_lead_candidates(
     diagnostics: ShortlistSelectionDiagnostics | None = None,
     now: datetime | None = None,
     result_label: str | None = None,
+    include_maybe_leads: bool = False,
+    force_lead_triage: bool = False,
+    lead_triage_cache_ttl_hours: float = LEAD_TRIAGE_CACHE_TTL_HOURS_DEFAULT,
 ) -> list[dict[str, Any]]:
     del include_domestic_restricted
-    rows = get_digest_rows(limit=pool_limit)
-    if diagnostics:
-        diagnostics.rule_based_rows = len(rows)
-        diagnostics.pre_triage_candidates_seen = len(rows)
-
     candidates: list[dict[str, Any]] = []
     selection_time = now or datetime.now(timezone.utc)
 
-    for row in rows:
-        assessment = business_assessment(row)
-        hard_noise_reason = lead_explicit_hard_noise_reason_for_row(row, assessment)
-        target_signals = (
-            lead_target_signal_matches_for_row(
-                row,
-                assessment,
-                hard_noise_reason=hard_noise_reason,
-            )
-            if hard_noise_reason
-            else ()
-        )
-        signal = classify_lead_signal(row, assessment)
-        print_debug_pre_triage_note(
-            row,
-            f"pre_triage_candidate_seen lead_signal={signal}",
-            debug_skips,
-        )
+    page_offset = 0
+    seen_row_keys: set[str] = set()
+    while limit > 0 and pool_limit > 0 and len(candidates) < limit:
+        page = get_digest_rows(limit=pool_limit, offset=page_offset)
+        if not page:
+            break
 
-        negative_feedback_reason = lead_negative_feedback_skip_reason(row)
-        if negative_feedback_reason:
-            if hard_noise_reason:
-                record_hard_noise_gate_decision(
-                    diagnostics,
+        unique_rows_in_page = 0
+        for page_index, row in enumerate(page):
+            stable_identity = row.get("tender_id") or row.get("id") or row.get("external_id")
+            row_key = (
+                f"stable:{stable_identity}"
+                if stable_identity
+                else f"page:{page_offset + page_index}"
+            )
+            if row_key in seen_row_keys:
+                continue
+            seen_row_keys.add(row_key)
+            unique_rows_in_page += 1
+            if diagnostics:
+                diagnostics.rule_based_rows += 1
+                diagnostics.pre_triage_candidates_seen = diagnostics.rule_based_rows
+
+            assessment = business_assessment(row)
+            hard_noise_reason = lead_explicit_hard_noise_reason_for_row(row, assessment)
+            target_signals = (
+                lead_target_signal_matches_for_row(
                     row,
+                    assessment,
                     hard_noise_reason=hard_noise_reason,
-                    target_signals=target_signals,
-                    final_decision="skipped_by_feedback",
-                    debug_skips=debug_skips,
                 )
-            record_lead_pre_triage_skip(
-                diagnostics,
+                if hard_noise_reason
+                else ()
+            )
+            signal = classify_lead_signal(row, assessment)
+            print_debug_pre_triage_note(
                 row,
-                negative_feedback_reason,
+                f"pre_triage_candidate_seen lead_signal={signal}",
                 debug_skips,
             )
-            continue
 
-        if has_llm_report_for_kind(
-            row,
-            report_kind=REPORT_KIND_LEAD,
-            result_label=result_label,
-        ) and not force:
-            if hard_noise_reason:
-                record_hard_noise_gate_decision(
-                    diagnostics,
-                    row,
-                    hard_noise_reason=hard_noise_reason,
-                    target_signals=target_signals,
-                    final_decision="skipped_by_existing_report",
-                    debug_skips=debug_skips,
-                )
-            record_lead_pre_triage_skip(
-                diagnostics,
-                row,
-                "lead_already_has_report",
-                debug_skips,
-            )
-            continue
-
-        waiting_for_full_report = lead_go_waiting_for_full_report(row)
-        if hard_noise_reason:
-            if waiting_for_full_report:
-                record_hard_noise_gate_decision(
-                    diagnostics,
-                    row,
-                    hard_noise_reason=hard_noise_reason,
-                    target_signals=target_signals,
-                    final_decision="existing_go_waiting",
-                    debug_skips=debug_skips,
-                )
-            elif target_signals:
-                record_hard_noise_gate_decision(
-                    diagnostics,
-                    row,
-                    hard_noise_reason=hard_noise_reason,
-                    target_signals=target_signals,
-                    final_decision="override_to_triage",
-                    debug_skips=debug_skips,
-                )
-            else:
-                record_hard_noise_gate_decision(
-                    diagnostics,
-                    row,
-                    hard_noise_reason=hard_noise_reason,
-                    target_signals=target_signals,
-                    final_decision="strict_skip",
-                    debug_skips=debug_skips,
-                )
+            negative_feedback_reason = lead_negative_feedback_skip_reason(row)
+            if negative_feedback_reason:
+                if hard_noise_reason:
+                    record_hard_noise_gate_decision(
+                        diagnostics,
+                        row,
+                        hard_noise_reason=hard_noise_reason,
+                        target_signals=target_signals,
+                        final_decision="skipped_by_feedback",
+                        debug_skips=debug_skips,
+                    )
                 record_lead_pre_triage_skip(
                     diagnostics,
                     row,
-                    f"lead_hard_noise={hard_noise_reason}",
+                    negative_feedback_reason,
                     debug_skips,
                 )
                 continue
 
-        deadline_note = lead_deadline_allowed_note(row, now=selection_time)
-        if deadline_note:
-            print_debug_pre_triage_note(row, deadline_note, debug_skips)
+            if has_llm_report_for_kind(
+                row,
+                report_kind=REPORT_KIND_LEAD,
+                result_label=result_label,
+            ) and not force:
+                if hard_noise_reason:
+                    record_hard_noise_gate_decision(
+                        diagnostics,
+                        row,
+                        hard_noise_reason=hard_noise_reason,
+                        target_signals=target_signals,
+                        final_decision="skipped_by_existing_report",
+                        debug_skips=debug_skips,
+                    )
+                record_lead_pre_triage_skip(
+                    diagnostics,
+                    row,
+                    "lead_already_has_report",
+                    debug_skips,
+                )
+                continue
 
-        if diagnostics:
-            diagnostics.rule_based_passed += 1
-        if waiting_for_full_report:
-            print_debug_pre_triage_note(row, "go_waiting_for_full_report", debug_skips)
-        print_debug_pre_triage_note(row, f"eligible_for_paid_triage lead_signal={signal}", debug_skips)
+            waiting_for_full_report = lead_go_waiting_for_full_report(row)
+            if hard_noise_reason:
+                if waiting_for_full_report:
+                    record_hard_noise_gate_decision(
+                        diagnostics,
+                        row,
+                        hard_noise_reason=hard_noise_reason,
+                        target_signals=target_signals,
+                        final_decision="existing_go_waiting",
+                        debug_skips=debug_skips,
+                    )
+                elif target_signals:
+                    record_hard_noise_gate_decision(
+                        diagnostics,
+                        row,
+                        hard_noise_reason=hard_noise_reason,
+                        target_signals=target_signals,
+                        final_decision="override_to_triage",
+                        debug_skips=debug_skips,
+                    )
+                else:
+                    record_hard_noise_gate_decision(
+                        diagnostics,
+                        row,
+                        hard_noise_reason=hard_noise_reason,
+                        target_signals=target_signals,
+                        final_decision="strict_skip",
+                        debug_skips=debug_skips,
+                    )
+                    record_lead_pre_triage_skip(
+                        diagnostics,
+                        row,
+                        f"lead_hard_noise={hard_noise_reason}",
+                        debug_skips,
+                    )
+                    continue
 
-        category_name, category_cfg = match_target_category(row, profile)
-        if not category_name or not category_cfg:
-            category_name, category_label = lead_category_from_signal(row, assessment)
-            category_cfg = {"label": category_label}
+            triage_skip_reason = lead_triage_selection_skip_reason(
+                row,
+                ttl_hours=lead_triage_cache_ttl_hours,
+                include_maybe_leads=include_maybe_leads,
+                force_lead_triage=force_lead_triage,
+                now=selection_time,
+            )
+            if triage_skip_reason:
+                record_lead_pre_triage_skip(
+                    diagnostics,
+                    row,
+                    triage_skip_reason,
+                    debug_skips,
+                )
+                continue
 
-        row = dict(row)
-        row["_lead_signal"] = signal
-        row["_lead_waiting_for_full_report"] = waiting_for_full_report
-        row["_llm_category"] = category_name
-        row["_llm_category_label"] = category_cfg.get("label") or category_name
-        candidates.append(row)
+            deadline_note = lead_deadline_allowed_note(row, now=selection_time)
+            if deadline_note:
+                print_debug_pre_triage_note(row, deadline_note, debug_skips)
+
+            if diagnostics:
+                diagnostics.rule_based_passed += 1
+            if waiting_for_full_report:
+                print_debug_pre_triage_note(row, "go_waiting_for_full_report", debug_skips)
+            print_debug_pre_triage_note(
+                row,
+                f"eligible_for_paid_triage lead_signal={signal}",
+                debug_skips,
+            )
+
+            category_name, category_cfg = match_target_category(row, profile)
+            if not category_name or not category_cfg:
+                category_name, category_label = lead_category_from_signal(row, assessment)
+                category_cfg = {"label": category_label}
+
+            row = dict(row)
+            row["_lead_signal"] = signal
+            row["_lead_waiting_for_full_report"] = waiting_for_full_report
+            row["_llm_category"] = category_name
+            row["_llm_category_label"] = category_cfg.get("label") or category_name
+            candidates.append(row)
+
+        if len(page) < pool_limit or unique_rows_in_page == 0:
+            break
+        page_offset += len(page)
 
     if diagnostics:
         diagnostics.eligible_for_llm_before_limit = len(candidates)
@@ -4440,6 +4548,9 @@ def select_candidates(
     now: datetime | None = None,
     report_kind: str = REPORT_KIND_TECHNICAL,
     result_label: str | None = None,
+    include_maybe_leads: bool = False,
+    force_lead_triage: bool = False,
+    lead_triage_cache_ttl_hours: float = LEAD_TRIAGE_CACHE_TTL_HOURS_DEFAULT,
 ) -> list[dict[str, Any]]:
     report_kind = normalize_report_kind(report_kind)
     if report_kind == REPORT_KIND_LEAD:
@@ -4457,6 +4568,9 @@ def select_candidates(
             diagnostics=diagnostics,
             now=now,
             result_label=result_label,
+            include_maybe_leads=include_maybe_leads,
+            force_lead_triage=force_lead_triage,
+            lead_triage_cache_ttl_hours=lead_triage_cache_ttl_hours,
         )
 
     rows = get_digest_rows(limit=pool_limit)
@@ -5028,6 +5142,9 @@ def main() -> None:
         diagnostics=selection_diagnostics,
         report_kind=report_kind,
         result_label=args.result_label,
+        include_maybe_leads=args.include_maybe_leads,
+        force_lead_triage=args.force_lead_triage,
+        lead_triage_cache_ttl_hours=lead_triage_cache_ttl_hours,
     )
     print_selection_diagnostics(selection_diagnostics)
     print_debug_skip_limit_summary(debug_skips)

@@ -89,7 +89,7 @@ MAX_TELEGRAM_MESSAGE_LEN = 3900
 TELEGRAM_UI_FLOW_VERSION = "lead-existing-client-2026-06-25"
 TELEGRAM_RECENT_DIGEST_HOURS = 24
 TELEGRAM_BULK_CARD_DELAY_SECONDS = 1.1
-TELEGRAM_RETRY_AFTER_MAX_SECONDS = 120.0
+TELEGRAM_RETRY_AFTER_MAX_SECONDS = 300.0
 TELEGRAM_RETRY_AFTER_BUFFER_SECONDS = 0.5
 TELEGRAM_NETWORK_RETRY_ATTEMPTS = 3
 TELEGRAM_NETWORK_RETRY_BASE_SECONDS = 1.5
@@ -164,6 +164,10 @@ TELEGRAM_LLM_START_BUSY_OTHER = "busy_other"
 TELEGRAM_LLM_ALREADY_READY_MESSAGE = "Разбор по этой закупке уже готов."
 TELEGRAM_LLM_SAME_RUNNING_MESSAGE = "Разбор уже выполняется. Повторно запускать не нужно."
 TELEGRAM_LLM_BUSY_OTHER_MESSAGE = "Сейчас уже идет LLM-разбор другой закупки. Попробуйте позже."
+TELEGRAM_LLM_GENERATION_DISABLED_MESSAGE = (
+    "Новый LLM-разбор приостановлен, чтобы не расходовать платный лимит. "
+    "Уже готовые отчеты, карточки и рабочие кнопки остаются доступны."
+)
 TELEGRAM_LLM_STARTED_MESSAGE_TEMPLATE = "Принял в работу: {external_id}. Разбор запущен."
 TELEGRAM_LLM_SUCCESS_PREFIX = "🤖 Разбор готов"
 TELEGRAM_DOCUMENT_NOT_READY_MESSAGE = (
@@ -2352,6 +2356,16 @@ async def llm_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         )
         await query.message.reply_text(TELEGRAM_LLM_ALREADY_READY_MESSAGE)
         await send_llm_success_card_reply(query.message, tender_id, existing_result)
+        return
+
+    if not bool(getattr(settings, "telegram_llm_generation_enabled", True)):
+        logger.info(
+            "TG_FLOW version=%s handler=llm_callback event=generation_disabled tender_id=%s external_id=%s",
+            TELEGRAM_UI_FLOW_VERSION,
+            tender_id,
+            external_id,
+        )
+        await query.message.reply_text(TELEGRAM_LLM_GENERATION_DISABLED_MESSAGE)
         return
 
     logger.info(

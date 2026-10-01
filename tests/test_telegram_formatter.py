@@ -83,6 +83,8 @@ def install_telegram_formatter_stubs() -> None:
         telegram_proxy_url=None,
         telegram_allowed_chat_ids="",
         telegram_bot_token="token",
+        agent_radar_telegram_bundle=None,
+        agent_radar_telegram_review_queue=None,
         database_url="",
     )
     sys.modules["app.config"] = config
@@ -988,6 +990,35 @@ class TelegramFormatterTest(unittest.TestCase):
 
         class RetryAfter(Exception):
             retry_after = 2
+
+        class Message:
+            async def reply_text(self, **kwargs):
+                sent.append(kwargs)
+                if len(sent) == 1:
+                    raise RetryAfter()
+
+        with patch.object(telegram_bot.asyncio, "sleep", new=AsyncMock()) as sleep:
+            asyncio.run(
+                telegram_bot.send_card_message(
+                    Message(),
+                    "card text",
+                    None,
+                    tender_id="tender-1",
+                )
+            )
+
+        self.assertEqual(len(sent), 2)
+        self.assertEqual(sent[0]["text"], "card text")
+        self.assertEqual(sent[1]["text"], "card text")
+        sleep.assert_awaited_once_with(
+            RetryAfter.retry_after + telegram_bot.TELEGRAM_RETRY_AFTER_BUFFER_SECONDS
+        )
+
+    def test_send_card_message_honors_long_telegram_flood_control_pause(self) -> None:
+        sent = []
+
+        class RetryAfter(Exception):
+            retry_after = 178
 
         class Message:
             async def reply_text(self, **kwargs):
@@ -2146,6 +2177,35 @@ class TelegramFormatterTest(unittest.TestCase):
 
         self.assertEqual(replies, [telegram_bot.TELEGRAM_LLM_ALREADY_READY_MESSAGE])
         send_card_reply.assert_awaited_once()
+        begin_run.assert_not_called()
+        prepare_tender.assert_not_called()
+        generate_report.assert_not_called()
+
+    def test_llm_callback_generation_disabled_does_not_start_paid_analysis(self) -> None:
+        update, replies, _ = self.make_llm_update()
+
+        with (
+            patch.object(telegram_bot, "is_allowed", return_value=True),
+            patch.object(telegram_bot, "get_tender_external_id", return_value=("EXT-1", "Tender")),
+            patch.object(telegram_bot, "get_best_existing_llm_report", return_value=None),
+            patch.object(
+                telegram_bot.settings,
+                "telegram_llm_generation_enabled",
+                False,
+                create=True,
+            ),
+            patch.object(telegram_bot, "llm_document_not_ready_message") as readiness,
+            patch.object(telegram_bot, "begin_telegram_llm_analysis_run") as begin_run,
+            patch.object(telegram_bot, "prepare_tender_for_analysis") as prepare_tender,
+            patch.object(telegram_bot, "generate_presales_report") as generate_report,
+        ):
+            asyncio.run(telegram_bot.llm_callback(update, types.SimpleNamespace()))
+
+        self.assertEqual(
+            replies,
+            [telegram_bot.TELEGRAM_LLM_GENERATION_DISABLED_MESSAGE],
+        )
+        readiness.assert_not_called()
         begin_run.assert_not_called()
         prepare_tender.assert_not_called()
         generate_report.assert_not_called()

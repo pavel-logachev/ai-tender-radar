@@ -2549,11 +2549,22 @@ def is_in_work_sales_candidate(tender: dict, *, now: datetime | None = None) -> 
     )
 
 
-def get_digest_rows(limit: int | None = 15) -> list[dict]:
+def get_digest_rows(limit: int | None = 15, *, offset: int = 0) -> list[dict]:
     with psycopg.connect(settings.database_url, row_factory=dict_row) as conn:
         with conn.cursor(row_factory=dict_row) as cur:
-            limit_clause = "LIMIT %s" if limit is not None else ""
-            params = (limit,) if limit is not None else ()
+            normalized_offset = max(0, int(offset))
+            if limit is not None and normalized_offset:
+                pagination_clause = "LIMIT %s OFFSET %s"
+                params = (limit, normalized_offset)
+            elif limit is not None:
+                pagination_clause = "LIMIT %s"
+                params = (limit,)
+            elif normalized_offset:
+                pagination_clause = "OFFSET %s"
+                params = (normalized_offset,)
+            else:
+                pagination_clause = ""
+                params = ()
             sales_feedback_placeholders = sql_placeholders(
                 len(SALES_FEEDBACK_LOOKUP_STATUSES)
             )
@@ -2586,6 +2597,7 @@ def get_digest_rows(limit: int | None = 15) -> list[dict]:
                     triage.created_at AS lead_triage_created_at,
                     triage.analysis_type AS lead_triage_analysis_type,
                     triage.lead_decision AS lead_triage_decision,
+                    operational_lr.result AS lead_llm_report_result,
                     operational_lr.created_at AS operational_lead_report_created_at,
                     operational_lr.analysis_type AS operational_lead_report_analysis_type,
                     operational_lr.recommendation AS operational_lead_report_recommendation,
@@ -2697,8 +2709,8 @@ def get_digest_rows(limit: int | None = 15) -> list[dict]:
                     ORDER BY pe.created_at DESC
                     LIMIT 1
                 ) partial_download_event ON TRUE
-                ORDER BY a.score DESC, t.deadline_at ASC NULLS LAST
-                {limit_clause};
+                ORDER BY a.score DESC, t.deadline_at ASC NULLS LAST, t.id ASC
+                {pagination_clause};
                 """,
                 (
                     LEAD_TRIAGE_ANALYSIS_TYPE,
