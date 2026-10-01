@@ -1,0 +1,32 @@
+{
+  "schema_version": "agent-radar-source-export-v1",
+  "source": "example-source",
+  "search": {
+    "publish_date_from": "2026-09-28",
+    "publish_date_to": "2026-09-29",
+    "query": "",
+    "operator_declared_complete": true,
+    "results": [
+      {"orderId": 101, "name": "Расширение системы хранения данных исследовательского центра", "maxPrice": 0},
+      {"orderId": 102, "name": "Продление обслуживания принтеров", "maxPrice": 500000}
+    ]
+  },
+  "details": [
+    {
+      "order_id": 101,
+      "order": {
+        "name": "Расширение системы хранения данных исследовательского центра",
+        "placerOrganizationName": "Учебный центр Север",
+        "contactPerson": "PRIVATE PLACEHOLDER -- НЕ КОПИРОВАТЬ В АГЕНТНЫЙ СНИМОК",
+        "tenderUrl": "https://example.org/synthetic/101",
+        "documents": [{"id": 201, "title": "Учебное техническое задание", "url": "https://example.org/private"}]
+      },
+      "extracted_documents": [{"document_id": 201, "text": "Заказчику требуется увеличение ёмкости действующей системы хранения данных на 100 ТБ. Упоминание конкретной платформы в этом учебном примере отсутствует."}]
+    },
+    {
+      "order_id": 102,
+      "order": {"name": "Продление обслуживания принтеров", "placerOrganizationName": "Учебный центр Юг", "documents": []},
+      "extracted_documents": []
+    }
+  ]
+}

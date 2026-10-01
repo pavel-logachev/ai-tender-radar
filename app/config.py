@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     telegram_bot_token: str | None = None
     telegram_allowed_chat_ids: str | None = None
     telegram_proxy_url: str | None = None
+    telegram_llm_generation_enabled: bool = True
 
     email_smtp_host: str | None = None
     email_smtp_port: int = 587

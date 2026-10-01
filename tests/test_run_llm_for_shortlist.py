@@ -1491,6 +1491,183 @@ class RunLLMForShortlistTest(unittest.TestCase):
         output = stdout.getvalue()
         self.assertIn("Pre-triage lead candidate waiting-go: go_waiting_for_full_report", output)
 
+    def test_lead_selection_reads_next_pool_page_after_first_page_is_filtered(self) -> None:
+        reported = {
+            "external_id": "reported",
+            "title": "Existing lead report",
+            "price": 100_000_000,
+            "score": 99,
+            "lead_llm_report_result": {"report": {"lead_summary": "done"}},
+            "operational_lead_report_analysis_type": shortlist.LEAD_LLM_REPORT_ANALYSIS_TYPE,
+        }
+        rejected_by_sales = {
+            "external_id": "sales-rejected",
+            "title": "Rejected by sales",
+            "price": 90_000_000,
+            "score": 98,
+            "latest_sales_status": "sales_not_relevant",
+        }
+        new_candidate = {
+            "external_id": "new-candidate",
+            "title": "Поставка серверного оборудования",
+            "price": 40_000_000,
+            "score": 65,
+        }
+        pages = {
+            0: [reported, rejected_by_sales],
+            2: [new_candidate],
+        }
+        requested_offsets: list[int] = []
+
+        def fake_get_digest_rows(*, limit: int, offset: int = 0) -> list[dict]:
+            self.assertEqual(limit, 2)
+            requested_offsets.append(offset)
+            return pages.get(offset, [])
+
+        with (
+            patch.object(shortlist, "get_digest_rows", side_effect=fake_get_digest_rows),
+            patch.object(shortlist, "business_assessment", return_value={"market_access": "target_hardware"}),
+            patch.object(shortlist, "match_target_category", return_value=("servers", {"label": "Servers"})),
+        ):
+            selected = shortlist.select_candidates(
+                profile={},
+                limit=1,
+                pool_limit=2,
+                force=False,
+                min_price=5_000_000,
+                include_low_priority=False,
+                include_non_full_deals=False,
+                include_domestic_restricted=False,
+                debug_skips=False,
+                report_kind="lead",
+            )
+
+        self.assertEqual([row["external_id"] for row in selected], ["new-candidate"])
+        self.assertEqual(requested_offsets, [0, 2])
+
+    def test_fresh_non_actionable_triage_does_not_crowd_out_new_candidate(self) -> None:
+        now = datetime(2026, 8, 10, 9, 0, tzinfo=timezone.utc)
+        fresh_reject = {
+            "external_id": "fresh-reject",
+            "title": "Previously rejected lead",
+            "price": 100_000_000,
+            "score": 99,
+            "lead_triage_created_at": (now - timedelta(hours=1)).isoformat(),
+            "lead_triage_result": {
+                "lead_decision": "reject",
+                "lead_priority": "low",
+                "confidence": "high",
+                "reject_reason": "not a current lead",
+                "requires_full_lead_report": False,
+            },
+        }
+        new_candidate = {
+            "external_id": "new-candidate",
+            "title": "Поставка серверного оборудования",
+            "price": 20_000_000,
+            "score": 65,
+        }
+
+        with (
+            patch.object(shortlist, "get_digest_rows", return_value=[fresh_reject, new_candidate]),
+            patch.object(shortlist, "business_assessment", return_value={"market_access": "target_hardware"}),
+            patch.object(shortlist, "match_target_category", return_value=("servers", {"label": "Servers"})),
+            patch.object(shortlist, "analysis_result_for_candidate", return_value=None),
+        ):
+            selected = shortlist.select_candidates(
+                profile={},
+                limit=1,
+                pool_limit=2,
+                force=False,
+                min_price=5_000_000,
+                include_low_priority=False,
+                include_non_full_deals=False,
+                include_domestic_restricted=False,
+                debug_skips=False,
+                now=now,
+                report_kind="lead",
+                lead_triage_cache_ttl_hours=24,
+            )
+
+        self.assertEqual([row["external_id"] for row in selected], ["new-candidate"])
+
+    def test_stale_non_actionable_triage_returns_to_selection_after_ttl(self) -> None:
+        now = datetime(2026, 8, 10, 9, 0, tzinfo=timezone.utc)
+        stale_reject = {
+            "external_id": "stale-reject",
+            "title": "Previously rejected server lead",
+            "price": 30_000_000,
+            "score": 65,
+            "lead_triage_created_at": (now - timedelta(hours=25)).isoformat(),
+            "lead_triage_result": {
+                "lead_decision": "reject",
+                "lead_priority": "low",
+                "confidence": "high",
+                "reject_reason": "old decision",
+                "requires_full_lead_report": False,
+            },
+        }
+
+        with (
+            patch.object(shortlist, "get_digest_rows", return_value=[stale_reject]),
+            patch.object(shortlist, "business_assessment", return_value={"market_access": "target_hardware"}),
+            patch.object(shortlist, "match_target_category", return_value=("servers", {"label": "Servers"})),
+            patch.object(shortlist, "analysis_result_for_candidate", return_value=None),
+        ):
+            selected = shortlist.select_candidates(
+                profile={},
+                limit=1,
+                pool_limit=1,
+                force=False,
+                min_price=5_000_000,
+                include_low_priority=False,
+                include_non_full_deals=False,
+                include_domestic_restricted=False,
+                debug_skips=False,
+                now=now,
+                report_kind="lead",
+                lead_triage_cache_ttl_hours=24,
+            )
+
+        self.assertEqual([row["external_id"] for row in selected], ["stale-reject"])
+
+    def test_lead_selection_uses_complete_empty_sql_snapshots_without_db_fallback(self) -> None:
+        row = {
+            "tender_id": "tender-1",
+            "external_id": "new-candidate",
+            "title": "Поставка серверного оборудования",
+            "price": 20_000_000,
+            "score": 65,
+            "lead_triage_result": None,
+            "lead_triage_analysis_type": None,
+            "lead_llm_report_result": None,
+            "operational_lead_report_analysis_type": None,
+        }
+
+        with (
+            patch.object(shortlist, "get_digest_rows", return_value=[row]),
+            patch.object(shortlist, "business_assessment", return_value={"market_access": "target_hardware"}),
+            patch.object(shortlist, "match_target_category", return_value=("servers", {"label": "Servers"})),
+            patch.object(shortlist, "analysis_result_for_candidate") as triage_db_lookup,
+            patch.object(shortlist, "analysis_result_exists_for_candidate") as report_db_lookup,
+        ):
+            selected = shortlist.select_candidates(
+                profile={},
+                limit=1,
+                pool_limit=2,
+                force=False,
+                min_price=5_000_000,
+                include_low_priority=False,
+                include_non_full_deals=False,
+                include_domestic_restricted=False,
+                debug_skips=False,
+                report_kind="lead",
+            )
+
+        self.assertEqual([item["external_id"] for item in selected], ["new-candidate"])
+        triage_db_lookup.assert_not_called()
+        report_db_lookup.assert_not_called()
+
     def test_lead_storage_signal_beats_construction_noise_for_95790607_like_title(self) -> None:
         row = {
             "external_id": "95790607",

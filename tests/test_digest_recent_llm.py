@@ -2321,6 +2321,20 @@ class DigestRecentLLMTest(unittest.TestCase):
             ),
         )
 
+    def test_digest_rows_pagination_is_parameterized_and_stable(self) -> None:
+        cursor = FakeCursor()
+
+        with patch.object(self.digest.psycopg, "connect", return_value=FakeConnection(cursor)):
+            rows = self.digest.get_digest_rows(limit=10, offset=20)
+
+        self.assertEqual(rows, [])
+        self.assertIn(
+            "ORDER BY a.score DESC, t.deadline_at ASC NULLS LAST, t.id ASC",
+            cursor.query,
+        )
+        self.assertIn("LIMIT %s OFFSET %s", cursor.query)
+        self.assertEqual(cursor.params[-2:], (10, 20))
+
     def test_digest_sql_source_has_no_raw_single_percent_like_literals(self) -> None:
         source = Path(self.digest.__file__).read_text(encoding="utf-8")
 

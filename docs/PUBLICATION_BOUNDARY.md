@@ -4,7 +4,7 @@ This repository was created as a clean-room public root. It does not preserve th
 
 ## Included
 
-- application Python source;
+- application Python source (`app/`) and the sanitized agent-first core (`agent_radar/`);
 - safe acquisition and document processing code;
 - LLM contracts and evaluation code;
 - Telegram/Excel workflow implementation;
@@ -23,6 +23,11 @@ This repository was created as a clean-room public root. It does not preserve th
 - commercial target lists and GTM materials;
 - deployment aliases, private network configuration and rollback artifacts;
 - raw third-party API/Swagger snapshots;
+- provider connectors and licensed API clients;
+- customer research datasets, contact hints and any real person or organization contact data;
+- the production agent prompt and scoring playbook (a generic example prompt is included);
+- production agent runtime, container, gateway and egress-proxy configuration;
+- operational status and deployment-gate documents;
 - private production Git history.
 
 ## Evidence policy
