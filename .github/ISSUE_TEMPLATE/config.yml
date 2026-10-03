@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Сообщить об уязвимости
+    url: https://github.com/pavel-logachev/ai-tender-radar/security/advisories/new
+    about: Закрытый канал для проблем безопасности, без публичного issue
+  - name: Похожая задача в вашей компании
+    url: https://logachev.net/portfolio/tender-radar/
+    about: Кейс и контакты автора
