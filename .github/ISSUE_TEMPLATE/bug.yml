@@ -1,0 +1,40 @@
+name: Ошибка
+description: Локальный запуск, тесты или обработка закупок работают не так, как описано
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Не прикладывайте учётные данные, идентификаторы чатов, скачанные закупочные документы и отчёты клиентов. Примеры должны быть синтетическими.
+  - type: input
+    id: commit
+    attributes:
+      label: Коммит или дата клонирования
+      placeholder: 1a2b3c4 или 03.10.2026
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Окружение
+      description: Операционная система, версия Python, запуск через Docker или напрямую
+      placeholder: Ubuntu 24.04, Python 3.12, Docker
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Что вы сделали
+      description: Команды по порядку и входные данные (синтетические)
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Что произошло
+      description: Текст ошибки или фрагмент вывода без секретов
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Что ожидали
