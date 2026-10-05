@@ -6,7 +6,7 @@
 
 [![CI](https://github.com/pavel-logachev/ai-tender-radar/actions/workflows/quality.yml/badge.svg)](https://github.com/pavel-logachev/ai-tender-radar/actions/workflows/quality.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-2f3e73)](https://www.python.org/)
-[![Tests 717](https://img.shields.io/badge/tests-717-167c69)](docs/VERIFICATION.md)
+[![Tests 726](https://img.shields.io/badge/tests-726-167c69)](docs/VERIFICATION.md)
 [![License AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-6b5fd6)](LICENSE)
 
 AI Tender Radar находит закупки серверов и систем хранения данных на Bidzaar и готовит менеджеру короткую карточку: кому звонить и о чём говорить. Закупка даёт повод познакомиться с заказчиком и обсудить его потребность в оборудовании.
@@ -43,7 +43,7 @@ Bidzaar API -> источник (каждые 30 минут) -> документ
 Состояние источника, исследования и доставки -> сообщения администратору
 ```
 
-Схема описывает рабочую систему. В публичном репозитории есть исследовательское ядро и код Telegram/Excel; боевой промпт, коннектор площадки и развёртывание остаются закрытыми. Вместо боевого промпта опубликован [универсальный пример](agent_radar/lead_agent/prompt.md). Полная [граница публикации](docs/PUBLICATION_BOUNDARY.md) также исключает реальные закупки, контакты, рабочие базы и секреты. Все тестовые данные синтетические.
+Схема описывает рабочую систему. В публичном репозитории есть исследовательское ядро и код Telegram/Excel; боевой промпт, коннектор площадки и развёртывание остаются закрытыми. Вместо боевого промпта опубликован [универсальный пример](agent_radar/lead_agent/prompt.md). Полная [граница публикации](docs/PUBLICATION_BOUNDARY.md) также исключает реальные закупки, контакты, рабочие базы и секреты. В текущем дереве тестовые идентификаторы закупок и документов, заказчики, суммы и контакты обезличены; реальные домены оставлены только в проверках формата URL и разрешённых хостов. Это не утверждение об уже опубликованной истории Git: [её ограничения](docs/VERIFICATION.md#ранее-опубликованная-история) описаны отдельно.
 
 ## Где принимаются решения
 
@@ -84,7 +84,7 @@ python -m pip install -r requirements.lock -r requirements-dev.txt
 python -m pip check
 $env:PYTHONUTF8='1'
 python tools/check_public_boundary.py
-python -m compileall -q app agent_radar scripts tests
+python -m compileall -q app agent_radar scripts tests tools
 python -m unittest discover -s tests -p "test_agent_radar_*.py"
 python -m unittest discover
 python scripts/apply_migrations.py --dry-run

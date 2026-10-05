@@ -1931,7 +1931,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="Prepare one tender for future LLM analysis without calling an LLM"
     )
     selector = parser.add_mutually_exclusive_group(required=True)
-    selector.add_argument("--external-id", help="Tender external_id, e.g. 95447274")
+    selector.add_argument("--external-id", help="Tender external_id, e.g. 00000002")
     selector.add_argument("--tender-id", help="Tender UUID from the local database")
     parser.add_argument("--limit-docs", type=int, default=5)
     parser.add_argument("--force-redownload", action="store_true")

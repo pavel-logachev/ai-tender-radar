@@ -146,7 +146,7 @@ class BusinessRulesShortlistRegressionTest(unittest.TestCase):
     def test_generic_equipment_title_does_not_pass_on_broad_storage_hint(self) -> None:
         row = {
             "title": "Поставка оборудования",
-            "initial_price": 87_064_664,
+            "initial_price": 80_000_000,
             "recommendation": "go",
             "result": {
                 "summary": "Поставка оборудования",
@@ -166,7 +166,7 @@ class BusinessRulesShortlistRegressionTest(unittest.TestCase):
     def test_generic_equipment_title_passes_with_structured_hardware_products(self) -> None:
         row = {
             "title": "Поставка оборудования",
-            "initial_price": 87_064_664,
+            "initial_price": 80_000_000,
             "recommendation": "go",
             "result": {
                 "summary": "Поставка оборудования",

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 import re
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -52,22 +54,46 @@ PATTERNS = {
     "aws-access-key": re.compile(r"\b(?:AKIA|ASIA)[A-Z0-9]{16}\b"),
     "openai-like-key": re.compile(r"\bsk-[A-Za-z0-9_-]{20,}\b"),
     "telegram-bot-token": re.compile(r"\b\d{8,12}:[A-Za-z0-9_-]{30,}\b"),
-    "internal-windows-path": re.compile(r"C:\\Users\\pavel", re.IGNORECASE),
-    "internal-linux-path": re.compile(r"/home/deploy/ai-tender-radar", re.IGNORECASE),
-    "internal-host-alias": re.compile(r"pavel-production-vps", re.IGNORECASE),
-    "production-ip": re.compile(r"\b194\.87\.101\.107\b"),
-    "private-domain-email": re.compile(r"\b[^\s@]+@logachev\.net\b", re.IGNORECASE),
     "provider-host": re.compile(r"\bbidzaar\.com\b", re.IGNORECASE),
     "production-agent-runtime": re.compile(r"atr-hermes|hermes_gateway|compose\.hermes", re.IGNORECASE),
 }
 
+
+def load_private_patterns() -> dict[str, re.Pattern[str]]:
+    """Read an operator-owned UTF-8 regex file outside the public tree."""
+    configured = os.environ.get("PUBLIC_BOUNDARY_PRIVATE_PATTERNS")
+    if not configured:
+        return {}
+    try:
+        path = Path(configured).resolve()
+        if path.is_relative_to(ROOT.resolve()):
+            print("private-patterns: configured file must be outside the public tree", file=sys.stderr)
+            raise SystemExit(2)
+        lines = path.read_text(encoding="utf-8-sig").splitlines()
+    except (OSError, UnicodeError, ValueError):
+        print("private-patterns: cannot read configured UTF-8 file", file=sys.stderr)
+        raise SystemExit(2)
+
+    patterns = {}
+    for line_number, line in enumerate(lines, 1):
+        expression = line.strip()
+        if not expression or expression.startswith("#"):
+            continue
+        try:
+            patterns[f"private-pattern-{line_number}"] = re.compile(expression)
+        except re.error:
+            print(f"private-patterns: invalid regex at line {line_number}", file=sys.stderr)
+            raise SystemExit(2)
+    return patterns
+
+
+PRIVATE_PATTERNS = load_private_patterns()
 findings: list[tuple[str, str]] = []
 text_files = 0
 for path in ROOT.rglob("*"):
     if not path.is_file() or ".git" in path.parts:
         continue
-    if path.resolve() == Path(__file__).resolve():
-        continue
+    is_checker = path.resolve() == Path(__file__).resolve()
     relative = path.relative_to(ROOT).as_posix()
     lowered_parts = {part.lower() for part in path.relative_to(ROOT).parts}
     if path.name in FORBIDDEN_NAMES:
@@ -84,7 +110,10 @@ for path in ROOT.rglob("*"):
     except UnicodeDecodeError:
         continue
     text_files += 1
-    for label, pattern in PATTERNS.items():
+    # Built-in deny-list literals would match themselves. Private patterns
+    # contain no public literals and apply to every text file, including this one.
+    patterns = PRIVATE_PATTERNS if is_checker else PATTERNS | PRIVATE_PATTERNS
+    for label, pattern in patterns.items():
         if pattern.search(text):
             findings.append((label, relative))
 

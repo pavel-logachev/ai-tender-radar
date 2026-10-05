@@ -49,7 +49,7 @@ class FakeConnection:
 class ManualDocumentImportTest(unittest.TestCase):
     def test_import_manual_document_copies_file_and_records_metadata(self) -> None:
         app_dir = Path("/app")
-        target_path = app_dir / "data" / "documents" / "zakupki360_95633694" / "manual_95633694_tz.pdf"
+        target_path = app_dir / "data" / "documents" / "zakupki360_00000013" / "manual_00000013_tz.pdf"
         saved_text: list[tuple[str, str]] = []
         events: list[dict] = []
 
@@ -58,12 +58,12 @@ class ManualDocumentImportTest(unittest.TestCase):
             patch.object(
                 importer,
                 "find_tender_by_external_id",
-                return_value={"id": "tender-1", "external_id": "95633694"},
+                return_value={"id": "tender-1", "external_id": "00000013"},
             ),
             patch.object(
                 importer,
                 "copy_manual_document_file",
-                return_value=(target_path, "manual_95633694_tz.pdf", "application/pdf", 15),
+                return_value=(target_path, "manual_00000013_tz.pdf", "application/pdf", 15),
             ) as copy_file,
             patch.object(importer, "upsert_manual_document_record", return_value="doc-1") as upsert,
             patch.object(importer, "extract_manual_document_text", return_value=("extracted text", None)),
@@ -79,8 +79,8 @@ class ManualDocumentImportTest(unittest.TestCase):
             ),
         ):
             result = importer.import_manual_document(
-                external_id="95633694",
-                file_path=Path("/app/data/manual_uploads/95633694_tz.pdf"),
+                external_id="00000013",
+                file_path=Path("/app/data/manual_uploads/00000013_tz.pdf"),
                 title="ТЗ, скачано вручную со сторонней площадки",
             )
 
@@ -88,9 +88,9 @@ class ManualDocumentImportTest(unittest.TestCase):
         self.assertEqual(result.extracted_chars, len("extracted text"))
         self.assertEqual(saved_text, [("doc-1", "extracted text")])
         self.assertEqual(events[0]["tender_id"], "tender-1")
-        self.assertEqual(events[0]["external_id"], "95633694")
+        self.assertEqual(events[0]["external_id"], "00000013")
         self.assertEqual(events[0]["document_id"], "doc-1")
-        self.assertIn("manual_95633694", result.filename)
+        self.assertIn("manual_00000013", result.filename)
         self.assertIn("data", result.storage_path)
         copy_file.assert_called_once()
         upsert.assert_called_once()
@@ -105,18 +105,18 @@ class ManualDocumentImportTest(unittest.TestCase):
         ):
             document_id = importer.upsert_manual_document_record(
                 tender_id="tender-1",
-                document_url="manual://document/95633694/tz.pdf",
-                filename="manual_95633694_tz.pdf",
+                document_url="manual://document/00000013/tz.pdf",
+                filename="manual_00000013_tz.pdf",
                 mime_type="application/pdf",
                 size_bytes=42,
-                storage_path="data/documents/zakupki360_95633694/manual_95633694_tz.pdf",
+                storage_path="data/documents/zakupki360_00000013/manual_00000013_tz.pdf",
             )
 
         self.assertEqual(document_id, "doc-1")
         self.assertTrue(connection.committed)
         self.assertIn("INSERT INTO documents", cursor.queries[1])
         self.assertEqual(cursor.params[1][0], "tender-1")
-        self.assertEqual(cursor.params[1][2], "manual://document/95633694/tz.pdf")
+        self.assertEqual(cursor.params[1][2], "manual://document/00000013/tz.pdf")
 
     def test_record_manual_document_imported_event_uses_processing_event(self) -> None:
         cursor = FakeCursor()
@@ -125,11 +125,11 @@ class ManualDocumentImportTest(unittest.TestCase):
         with patch.object(importer, "connect_db", return_value=connection):
             importer.record_manual_document_imported_event(
                 tender_id="tender-1",
-                external_id="95633694",
+                external_id="00000013",
                 document_id="doc-1",
                 title="ТЗ",
-                filename="manual_95633694_tz.pdf",
-                storage_path="data/documents/zakupki360_95633694/manual_95633694_tz.pdf",
+                filename="manual_00000013_tz.pdf",
+                storage_path="data/documents/zakupki360_00000013/manual_00000013_tz.pdf",
                 extracted_chars=123,
                 extraction_error=None,
             )
@@ -138,7 +138,7 @@ class ManualDocumentImportTest(unittest.TestCase):
         self.assertIn("INSERT INTO processing_events", cursor.queries[0])
         self.assertEqual(cursor.params[0][1], importer.MANUAL_IMPORT_EVENT)
         payload = json.loads(cursor.params[0][2])
-        self.assertEqual(payload["external_id"], "95633694")
+        self.assertEqual(payload["external_id"], "00000013")
         self.assertEqual(payload["document_id"], "doc-1")
         self.assertEqual(payload["extracted_chars"], 123)
 

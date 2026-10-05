@@ -99,7 +99,7 @@ class AuditDocumentSelectionTest(unittest.TestCase):
         factory = types.ModuleType("app.llm.factory")
         factory.create_llm_client = lambda **kwargs: None
         row = {
-            "external_id": "96232690",
+            "external_id": "00000039",
             "title": "Поставка серверов",
             "customer_name": "Заказчик",
             "initial_price": 10_000_000,
@@ -142,7 +142,7 @@ class AuditDocumentSelectionTest(unittest.TestCase):
         factory = types.ModuleType("app.llm.factory")
         factory.create_llm_client = lambda **kwargs: None
         row = {
-            "external_id": "95881047",
+            "external_id": "00000034",
             "title": "Server supply",
             "customer_name": "Customer",
             "initial_price": 1_000_000,
@@ -189,7 +189,7 @@ class AuditDocumentSelectionTest(unittest.TestCase):
         factory = types.ModuleType("app.llm.factory")
         factory.create_llm_client = lambda **kwargs: None
         row = {
-            "external_id": "95755441",
+            "external_id": "00000022",
             "title": "Server supply",
             "customer_name": "Customer",
             "initial_price": 10_000_000,

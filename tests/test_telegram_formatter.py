@@ -1122,7 +1122,7 @@ class TelegramFormatterTest(unittest.TestCase):
 
     def test_digest_today_sends_operational_lead_cards(self) -> None:
         replies = []
-        lead_card = types.SimpleNamespace(tender_id="95633694", message_text="lead card")
+        lead_card = types.SimpleNamespace(tender_id="00000013", message_text="lead card")
 
         class Message:
             async def reply_text(self, text, **kwargs):
@@ -2276,14 +2276,14 @@ class TelegramFormatterTest(unittest.TestCase):
 
         with (
             patch.object(telegram_bot, "is_allowed", return_value=True),
-            patch.object(telegram_bot, "get_tender_external_id", return_value=("RST32615987873", "Tender")),
+            patch.object(telegram_bot, "get_tender_external_id", return_value=("RST00000000202", "Tender")),
             patch.object(telegram_bot, "get_best_existing_llm_report", return_value=None),
             patch.object(
                 telegram_bot,
                 "get_tender_digest_row",
                 return_value={
                     "tender_id": "tender-1",
-                    "external_id": "RST32615987873",
+                    "external_id": "RST00000000202",
                     "docs_count": 0,
                     "docs_with_text": 0,
                     "preparation_blocked_event": '{"status": "blocked_by_marketplace_auth"}',

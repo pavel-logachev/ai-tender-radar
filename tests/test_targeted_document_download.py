@@ -162,8 +162,8 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
             "_llm_category": "servers",
         }
         docs = [
-            {"id": "notice", "title": "444854856_1_Извещение_ОНМ_серверы пк.docx"},
-            {"id": "contract", "title": "444854860_2_Проект договора обор-е.docx"},
+            {"id": "notice", "title": "000000103_1_Извещение_ОНМ_серверы пк.docx"},
+            {"id": "contract", "title": "000000104_2_Проект договора обор-е.docx"},
             {"id": "kd", "title": "2_КД_материалы_ОНМ_серверы пк.docx"},
         ]
 
@@ -198,7 +198,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ]
         tender = {
             "id": "tender-1",
-            "external_id": "95721719",
+            "external_id": "00000018",
             "title": "Поставка оборудования не требующего монтажа (ОНМ)",
             "raw": {"full": {"documents": docs}},
         }
@@ -214,7 +214,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ):
             result = run_targeted_download_report(
                 object(),
-                external_id="95721719",
+                external_id="00000018",
                 tender_context={"_llm_category": "servers"},
                 limit_docs=1,
                 document_rate_limit_seconds=1.1,
@@ -231,7 +231,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ]
         tender = {
             "id": "tender-1",
-            "external_id": "95842229",
+            "external_id": "00000032",
             "title": "Поставка системы хранения данных",
             "raw": {"full": {"documents": docs}},
         }
@@ -292,7 +292,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ):
             result = run_targeted_download_report(
                 object(),
-                external_id="95842229",
+                external_id="00000032",
                 limit_docs=3,
                 document_rate_limit_seconds=1.1,
                 use_llm_planner=True,
@@ -311,7 +311,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ]
         tender = {
             "id": "tender-1",
-            "external_id": "95842229",
+            "external_id": "00000032",
             "title": "Поставка системы хранения данных",
             "raw": {"full": {"documents": docs}},
         }
@@ -337,7 +337,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ):
             result = run_targeted_download_report(
                 object(),
-                external_id="95842229",
+                external_id="00000032",
                 limit_docs=3,
                 document_rate_limit_seconds=1.1,
                 use_llm_planner=True,
@@ -358,7 +358,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ]
         tender = {
             "id": "tender-1",
-            "external_id": "95847264",
+            "external_id": "00000033",
             "title": "Поставка оборудования",
             "raw": {"full": {"documents": docs}},
         }
@@ -411,7 +411,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ):
             result = run_targeted_download_report(
                 object(),
-                external_id="95847264",
+                external_id="00000033",
                 limit_docs=2,
                 document_rate_limit_seconds=1.1,
                 use_llm_planner=True,
@@ -431,7 +431,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ]
         tender = {
             "id": "tender-1",
-            "external_id": "95842229",
+            "external_id": "00000032",
             "title": "Поставка системы хранения данных",
             "raw": {"full": {"documents": docs}},
         }
@@ -451,7 +451,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ):
             result = run_targeted_download_report(
                 object(),
-                external_id="95842229",
+                external_id="00000032",
                 limit_docs=2,
                 document_rate_limit_seconds=1.1,
             )
@@ -537,7 +537,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ]
         tender = {
             "id": "tender-1",
-            "external_id": "95543713",
+            "external_id": "00000009",
             "title": "Target tender",
             "raw": {"full": {"documents": docs}},
         }
@@ -563,7 +563,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ):
             result = run_targeted_download_report(
                 object(),
-                external_id="95543713",
+                external_id="00000009",
                 limit_docs=3,
                 document_rate_limit_seconds=1.1,
             )
@@ -584,7 +584,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ]
         tender = {
             "id": "tender-1",
-            "external_id": "95543713",
+            "external_id": "00000009",
             "title": "Target tender",
             "raw": {"full": {"documents": docs}},
         }
@@ -610,7 +610,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ):
             result = run_targeted_download_report(
                 object(),
-                external_id="95543713",
+                external_id="00000009",
                 limit_docs=3,
                 document_rate_limit_seconds=1.1,
             )
@@ -634,7 +634,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         docs = [{"id": "tz", "title": "Technical task"}]
         tender = {
             "id": "tender-1",
-            "external_id": "95543713",
+            "external_id": "00000009",
             "title": "Target tender",
             "raw": {"full": {"documents": docs}},
         }
@@ -649,7 +649,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ):
             result = run_targeted_download_report(
                 object(),
-                external_id="95543713",
+                external_id="00000009",
                 limit_docs=1,
                 document_rate_limit_seconds=1.1,
             )
@@ -667,12 +667,12 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
     def test_download_document_falls_back_to_allowed_direct_url_on_no_content(self) -> None:
         tender = {
             "id": "tender-1",
-            "external_id": "95881047",
+            "external_id": "00000034",
         }
         doc = {
-            "id": "445589013",
+            "id": "000000109",
             "title": "Technical requirements.pdf",
-            "url": "https://zakupki.gov.ru/223/purchase/public/download/download.html?id=110744982",
+            "url": "https://zakupki.gov.ru/223/purchase/public/download/download.html?id=000000101",
         }
 
         class FakeResponse:
@@ -694,7 +694,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
 
         z360_response = FakeResponse(
             204,
-            url="https://api.zakupki360.ru/api/orders/document/445589013",
+            url="https://api.zakupki360.ru/api/orders/document/000000109",
         )
         direct_response = FakeResponse(
             200,
@@ -736,7 +736,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
             self.assertTrue(saved)
             direct_download.assert_called_once()
             record_event.assert_not_called()
-            self.assertEqual(saved_records[0]["document_url"], document_url("445589013"))
+            self.assertEqual(saved_records[0]["document_url"], document_url("000000109"))
             saved_path = app_dir / saved_records[0]["storage_path"]
             self.assertTrue(saved_path.exists())
             self.assertEqual(saved_path.read_bytes(), direct_response.content)
@@ -775,7 +775,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ]
         tender = {
             "id": "tender-1",
-            "external_id": "95842229",
+            "external_id": "00000032",
             "title": "Поставка СХД",
             "raw": {"full": {"documents": docs}},
         }
@@ -792,7 +792,7 @@ class TargetedDocumentDownloadTest(unittest.TestCase):
         ):
             result = run_targeted_download_report(
                 object(),
-                external_id="95842229",
+                external_id="00000032",
                 limit_docs=2,
                 document_rate_limit_seconds=1.1,
             )

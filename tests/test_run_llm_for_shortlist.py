@@ -332,14 +332,14 @@ class RunLLMForShortlistTest(unittest.TestCase):
         ):
             readiness = shortlist.ensure_targeted_documents_before_llm(
                 {
-                    "external_id": "95748890",
+                    "external_id": "00000021",
                     "tender_id": "tender-id",
                     "_llm_category": "servers",
                     "raw": {
                         "full": {
                             "documents": [
                                 {
-                                    "id": "445000630",
+                                    "id": "000000105",
                                     "title": "Приложение 1 Описание Объекта закупки.docx",
                                 }
                             ]
@@ -367,7 +367,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
             document_download_was_run=False,
             document_readiness=shortlist.PRIMARY_TECHNICAL_DOCUMENT_NOT_PROCESSED,
             steps={"text_extraction": SimpleNamespace(attempted=True)},
-            errors=["443737157_TZ.pdf: no_text_extracted"],
+            errors=["000000102_TZ.pdf: no_text_extracted"],
         )
 
         with (
@@ -386,7 +386,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
         ):
             readiness = shortlist.ensure_lead_documents_before_llm(
                 {
-                    "external_id": "95499364",
+                    "external_id": "00000005",
                     "tender_id": "tender-id",
                     "_llm_category": "storage",
                 },
@@ -433,14 +433,14 @@ class RunLLMForShortlistTest(unittest.TestCase):
         ):
             readiness = shortlist.ensure_targeted_documents_before_llm(
                 {
-                    "external_id": "95748890",
+                    "external_id": "00000021",
                     "tender_id": "tender-id",
                     "_llm_category": "servers",
                     "raw": {
                         "full": {
                             "documents": [
                                 {
-                                    "id": "445000630",
+                                    "id": "000000105",
                                     "title": "Приложение 1 Описание Объекта закупки.docx",
                                 }
                             ]
@@ -1073,7 +1073,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
     def test_latest_negative_sales_feedback_skips_paid_llm_candidate(self) -> None:
         rows = [
             {
-                "external_id": "95759231",
+                "external_id": "00000023",
                 "title": "Negative feedback tender",
                 "price": 30_000_000,
                 "score": 95,
@@ -1114,7 +1114,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
     def test_transport_security_no_go_is_skipped_before_llm_shortlist(self) -> None:
         rows = [
             {
-                "external_id": "0354100008426000068",
+                "external_id": "0000000000000000301",
                 "title": (
                     "Оснащение объектов дорожного хозяйства инженерно-техническими "
                     "средствами обеспечения транспортной безопасности"
@@ -1149,18 +1149,18 @@ class RunLLMForShortlistTest(unittest.TestCase):
         rows = [
             {
                 "external_id": "modernization",
-                "title": "Модернизация репозитория данных / ЦОМД Минздрава",
-                "customer_name": "Минздрав",
-                "price": 410_700_000,
+                "title": "Модернизация системы хранения данных вымышленного заказчика",
+                "customer_name": "ООО Учебный заказчик",
+                "price": 400_000_000,
                 "score": 95,
                 "documents_with_text": 0,
                 "preparation_status": "no_valid_documents",
             },
             {
                 "external_id": "support",
-                "title": "Обеспечение работы серверов АО Россети Янтарь",
-                "customer_name": "АО Россети Янтарь",
-                "price": 2_270_000,
+                "title": "Обеспечение работы серверов АО Учебный энергетический заказчик",
+                "customer_name": "АО Учебный энергетический заказчик",
+                "price": 2_000_000,
                 "score": 90,
                 "documents_with_text": 0,
                 "preparation_blocked_event": json.dumps(
@@ -1170,7 +1170,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
             {
                 "external_id": "components",
                 "title": "Компоненты ИТ-инфраструктуры / СХД",
-                "price": 8_600_000,
+                "price": 8_000_000,
                 "score": 85,
             },
         ]
@@ -1668,16 +1668,15 @@ class RunLLMForShortlistTest(unittest.TestCase):
         triage_db_lookup.assert_not_called()
         report_db_lookup.assert_not_called()
 
-    def test_lead_storage_signal_beats_construction_noise_for_95790607_like_title(self) -> None:
+    def test_lead_storage_signal_beats_construction_noise_for_storage_title(self) -> None:
         row = {
-            "external_id": "95790607",
+            "external_id": "00000025",
             "title": (
-                "Поставка комплекта модернизации репозитория данных для развития центра "
-                "хранения и обработки медицинских данных для учреждений, "
-                "подведомственных Минздраву России (ЦОМД)"
+                "Поставка комплекта модернизации системы хранения данных: "
+                "центр обработки данных вымышленного заказчика"
             ),
-            "customer_name": "Минздрав России",
-            "price": 410_700_000,
+            "customer_name": "ООО Учебный заказчик",
+            "price": 400_000_000,
             "raw": {"note": "строительные требования к помещению заказчика"},
         }
         assessment = {"market_access": "open"}
@@ -1686,15 +1685,15 @@ class RunLLMForShortlistTest(unittest.TestCase):
         self.assertEqual(shortlist.classify_lead_signal(row, assessment), shortlist.LEAD_SIGNAL_STRONG)
         self.assertIsNone(shortlist.lead_noise_reason_from_corpus(corpus))
 
-    def test_95790607_like_title_is_not_hard_noise_and_can_go_to_triage(self) -> None:
+    def test_mojibake_repository_title_is_not_hard_noise_and_can_go_to_triage(self) -> None:
         row = {
-            "external_id": "95790607",
+            "external_id": "00000025",
             "title": (
                 "РџРѕСЃС‚Р°РІРєР° РєРѕРјРїР»РµРєС‚Р° РјРѕРґРµСЂРЅРёР·Р°С†РёРё СЂРµРїРѕР·РёС‚РѕСЂРёСЏ РґР°РЅРЅС‹С… РґР»СЏ СЂР°Р·РІРёС‚РёСЏ С†РµРЅС‚СЂР° "
                 "С…СЂР°РЅРµРЅРёСЏ Рё РѕР±СЂР°Р±РѕС‚РєРё РјРµРґРёС†РёРЅСЃРєРёС… РґР°РЅРЅС‹С…"
             ),
-            "customer_name": "РњРёРЅР·РґСЂР°РІ Р РѕСЃСЃРёРё",
-            "price": 410_700_000,
+            "customer_name": "ООО Учебный заказчик".encode("utf-8").decode("cp1251", errors="replace"),
+            "price": 400_000_000,
             "score": 95,
             "raw": {"note": "СЃС‚СЂРѕРёС‚РµР»СЊРЅС‹Рµ СЂР°Р±РѕС‚С‹ РІ РїРѕРјРµС‰РµРЅРёРё"},
         }
@@ -1720,11 +1719,11 @@ class RunLLMForShortlistTest(unittest.TestCase):
             )
 
         self.assertIsNone(shortlist.lead_hard_noise_reason_for_row(row, {"market_access": "open"}))
-        self.assertEqual([item["external_id"] for item in selected], ["95790607"])
+        self.assertEqual([item["external_id"] for item in selected], ["00000025"])
 
-    def test_95800176_like_server_network_equipment_can_go_to_triage(self) -> None:
+    def test_mojibake_server_network_equipment_can_go_to_triage(self) -> None:
         row = {
-            "external_id": "95800176",
+            "external_id": "00000028",
             "title": "РџРѕСЃС‚Р°РІРєР° Рё РџРќР  СЃРµСЂРІРµСЂРЅРѕРіРѕ Рё СЃРµС‚РµРІРѕРіРѕ РѕР±РѕСЂСѓРґРѕРІР°РЅРёСЏ",
             "price": 30_000_000,
             "score": 90,
@@ -1756,7 +1755,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 {"market_access": "target_hardware"},
             )
         )
-        self.assertEqual([item["external_id"] for item in selected], ["95800176"])
+        self.assertEqual([item["external_id"] for item in selected], ["00000028"])
 
     def test_generic_application_development_is_not_deterministic_strong_and_can_be_rejected_by_triage(self) -> None:
         row = {
@@ -1940,7 +1939,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 "road_security",
             ),
             (
-                "95480005",
+                "00000004",
                 (
                     "Оказание услуг по обеспечению работы комплексов автоматической "
                     "фотовидеофиксации административных правонарушений в области "
@@ -1970,9 +1969,9 @@ class RunLLMForShortlistTest(unittest.TestCase):
                     shortlist.LEAD_SIGNAL_NOISE,
                 )
 
-    def test_95480005_like_photo_fixation_is_hard_noise_before_triage(self) -> None:
+    def test_photo_fixation_is_hard_noise_before_triage(self) -> None:
         row = {
-            "external_id": "95480005",
+            "external_id": "00000004",
             "title": (
                 "Оказание услуг по обеспечению работы комплексов автоматической "
                 "фотовидеофиксации административных правонарушений в области "
@@ -2099,7 +2098,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
     def test_smoke_false_positive_overrides_remain_strict_skipped(self) -> None:
         rows = [
             {
-                "external_id": "95499423",
+                "external_id": "00000006",
                 "title": "Приобретение и монтаж систем видеонаблюдения",
                 "price": 12_000_000,
                 "score": 95,
@@ -2111,7 +2110,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 },
             },
             {
-                "external_id": "95808320",
+                "external_id": "00000030",
                 "title": "ПАК системы управления электронной очередью",
                 "price": 9_000_000,
                 "score": 94,
@@ -2120,7 +2119,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 },
             },
             {
-                "external_id": "95340355",
+                "external_id": "00000001",
                 "title": "Поставка оргтехники и запасных частей для вычислительной техники",
                 "price": 8_000_000,
                 "score": 93,
@@ -2132,7 +2131,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 },
             },
             {
-                "external_id": "96088613",
+                "external_id": "00000038",
                 "title": "Поставка комплектующих для оргтехники и вычислительной техники",
                 "price": 7_500_000,
                 "score": 92,
@@ -2141,7 +2140,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 },
             },
             {
-                "external_id": "96087372",
+                "external_id": "00000037",
                 "title": (
                     "Оказание услуг по содержанию и обслуживанию комплексов "
                     "автоматического весогабаритного контроля"
@@ -2156,14 +2155,14 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 },
             },
             {
-                "external_id": "95934325",
+                "external_id": "00000036",
                 "title": "Поставка приборов, аппаратуры и устройств учебно-демонстрационных прочих",
                 "price": 6_000_000,
                 "score": 90,
                 "raw": {"description": "сетевое оборудование, коммутаторы, учебный класс"},
             },
             {
-                "external_id": "95813981",
+                "external_id": "00000031",
                 "title": "Поставка приборов, аппаратуры и устройств учебно-демонстрационных прочих",
                 "price": 6_500_000,
                 "score": 89,
@@ -2175,7 +2174,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 },
             },
             {
-                "external_id": "95600679",
+                "external_id": "00000011",
                 "title": "Поставка лицензий Kaspersky для защиты информации почтовых серверов",
                 "price": 9_500_000,
                 "score": 88,
@@ -2187,7 +2186,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 },
             },
             {
-                "external_id": "95510702",
+                "external_id": "00000008",
                 "title": "Продление Kaspersky Security для почтовых серверов",
                 "price": 9_000_000,
                 "score": 87,
@@ -2237,23 +2236,23 @@ class RunLLMForShortlistTest(unittest.TestCase):
     def test_target_signal_overrides_hard_noise_to_paid_triage(self) -> None:
         rows = [
             {
-                "external_id": "95470865",
+                "external_id": "00000003",
                 "title": "ПАК для защиты информации и мониторинга инцидентов ИБ",
-                "price": 34_900_000,
+                "price": 35_000_000,
                 "score": 93,
                 "raw": {"note": "строительные работы в помещении"},
             },
             {
                 "external_id": "server-storage",
                 "title": "Поставка серверного оборудования и СХД для инфраструктуры DLP",
-                "price": 14_100_000,
+                "price": 14_000_000,
                 "score": 92,
                 "raw": {"note": "периферийное оборудование вычислительной техники"},
             },
             {
-                "external_id": "96272875",
+                "external_id": "00000041",
                 "title": "Миграция Exchange на Astra Linux и RuPost",
-                "price": 19_900_000,
+                "price": 20_000_000,
                 "score": 91,
                 "raw": {"note": "продление антивирусных лицензий"},
             },
@@ -2291,7 +2290,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
 
         self.assertEqual(
             {row["external_id"] for row in selected},
-            {"95470865", "server-storage", "96272875", "enterprise-infra"},
+            {"00000003", "server-storage", "00000041", "enterprise-infra"},
         )
         self.assertIsNone(shortlist.lead_hard_noise_reason_for_row(rows[0], {"market_access": "target_hardware"}))
         self.assertIsNone(shortlist.lead_hard_noise_reason_for_row(rows[1], {"market_access": "target_hardware"}))
@@ -2308,13 +2307,13 @@ class RunLLMForShortlistTest(unittest.TestCase):
 
     def test_existing_go_waiting_overrides_hard_noise_before_triage(self) -> None:
         row = {
-            "external_id": "96261999",
+            "external_id": "00000040",
             "title": (
                 "Выполнение работ по приведению в соответствие требованиям по защите "
                 "информации объектов информатизации и мониторингу инцидентов ИБ"
             ),
-            "customer_name": "РОССТАТ",
-            "price": 115_827_380,
+            "customer_name": "Учебное статистическое ведомство",
+            "price": 100_000_000,
             "score": 95,
             "raw": {"note": "периферийное оборудование вычислительной техники"},
             "lead_triage_created_at": fresh_lead_triage_created_at(),
@@ -2354,7 +2353,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 report_kind="lead",
             )
 
-        self.assertEqual([item["external_id"] for item in selected], ["96261999"])
+        self.assertEqual([item["external_id"] for item in selected], ["00000040"])
         self.assertTrue(selected[0]["_lead_waiting_for_full_report"])
         self.assertEqual(diagnostics.hard_noise_total, 1)
         self.assertEqual(diagnostics.hard_noise_overridden_by_existing_go, 1)
@@ -2368,7 +2367,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
         row = {
             "external_id": "negative-target",
             "title": "ПАК для защиты информации и мониторинга инцидентов ИБ",
-            "price": 34_900_000,
+            "price": 35_000_000,
             "score": 93,
             "raw": {"note": "строительные работы"},
             "latest_sales_status": "not_profile",
@@ -2404,12 +2403,12 @@ class RunLLMForShortlistTest(unittest.TestCase):
 
     def test_existing_full_report_wins_over_target_signal_override(self) -> None:
         row = {
-            "external_id": "96261999-existing-report",
+            "external_id": "00000040-existing-report",
             "title": (
                 "Выполнение работ по приведению в соответствие требованиям по защите "
                 "информации объектов информатизации и мониторингу инцидентов ИБ"
             ),
-            "price": 115_827_380,
+            "price": 100_000_000,
             "score": 93,
             "raw": {"note": "периферийное оборудование вычислительной техники"},
             "llm_report_analysis_type": shortlist.LEAD_LLM_REPORT_ANALYSIS_TYPE,
@@ -2514,31 +2513,31 @@ class RunLLMForShortlistTest(unittest.TestCase):
     def test_lead_classifier_keeps_core_infrastructure_examples_strong(self) -> None:
         cases = [
             (
-                "95793813",
+                "00000026",
                 "Расширение существующей системы хранения данных",
             ),
             (
-                "95800176",
+                "00000028",
                 "Поставка и ПНР серверного и сетевого оборудования",
             ),
             (
-                "95799957",
+                "00000027",
                 "Оборудование ИТ-инфраструктуры: накопители, кабели, дисковые полки, жесткие диски",
             ),
             (
-                "95807988",
-                "Обеспечение работы серверов АО Россети Янтарь",
+                "00000029",
+                "Обеспечение работы серверов АО Учебный энергетический заказчик",
             ),
             (
-                "95732885",
+                "00000020",
                 "Система хранения данных",
             ),
             (
-                "95682620",
+                "00000017",
                 "ПАК виртуализации и СХД",
             ),
             (
-                "95774082",
+                "00000024",
                 "Поставка серверов для центра обработки данных",
             ),
             (
@@ -2940,23 +2939,23 @@ class RunLLMForShortlistTest(unittest.TestCase):
             clear=False,
         ):
             external_id_only_exists = shortlist.analysis_result_exists_for_candidate(
-                {"external_id": "95790607"},
+                {"external_id": "00000025"},
                 shortlist.LEAD_LLM_REPORT_ANALYSIS_TYPE,
             )
             synthetic_db_like_external_id_exists = shortlist.analysis_result_exists_for_candidate(
                 {
-                    "external_id": "95790607",
+                    "external_id": "00000025",
                     "score": 95,
                     "raw": {"note": "synthetic unit row"},
                 },
                 shortlist.LEAD_LLM_REPORT_ANALYSIS_TYPE,
             )
             tender_id_exists = shortlist.analysis_result_exists_for_candidate(
-                {"tender_id": "tender-95790607", "external_id": "95790607"},
+                {"tender_id": "tender-00000025", "external_id": "00000025"},
                 shortlist.LEAD_LLM_REPORT_ANALYSIS_TYPE,
             )
             final_guard_external_id_exists = shortlist.analysis_result_exists_for_candidate(
-                {"external_id": "95790607"},
+                {"external_id": "00000025"},
                 shortlist.LEAD_LLM_REPORT_ANALYSIS_TYPE,
                 allow_external_id_fallback=True,
             )
@@ -2971,13 +2970,13 @@ class RunLLMForShortlistTest(unittest.TestCase):
 
     def test_lead_selection_keeps_synthetic_external_id_row_when_ambient_report_exists(self) -> None:
         row = {
-            "external_id": "95790607",
+            "external_id": "00000025",
             "title": (
                 "Р СџР С•РЎРѓРЎвЂљР В°Р Р†Р С”Р В° Р С”Р С•Р СР С—Р В»Р ВµР С”РЎвЂљР В° Р СР С•Р Т‘Р ВµРЎР‚Р Р…Р С‘Р В·Р В°РЎвЂ Р С‘Р С‘ "
                 "РЎР‚Р ВµР С—Р С•Р В·Р С‘РЎвЂљР С•РЎР‚Р С‘РЎРЏ Р Т‘Р В°Р Р…Р Р…РЎвЂ№РЎвЂ¦"
             ),
-            "customer_name": "Р СљР С‘Р Р…Р В·Р Т‘РЎР‚Р В°Р Р†",
-            "price": 410_700_000,
+            "customer_name": "ООО Учебный заказчик".encode("utf-8").decode("cp1251", errors="replace").encode("utf-8").decode("cp1251", errors="replace"),
+            "price": 400_000_000,
             "score": 95,
             "raw": {"note": "synthetic unit row"},
         }
@@ -3040,7 +3039,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
                 report_kind="lead",
             )
 
-        self.assertEqual([item["external_id"] for item in selected], ["95790607"])
+        self.assertEqual([item["external_id"] for item in selected], ["00000025"])
         self.assertEqual(connect_calls, [])
 
     def test_final_lead_report_guard_uses_external_id_when_tender_id_is_missing(self) -> None:
@@ -3080,7 +3079,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
             clear=False,
         ):
             exists = shortlist.operational_lead_report_exists_for_candidate(
-                {"external_id": "95790607"}
+                {"external_id": "00000025"}
             )
 
         self.assertTrue(exists)
@@ -3478,9 +3477,9 @@ class RunLLMForShortlistTest(unittest.TestCase):
     def test_target_hardware_marketplace_auth_candidate_does_not_take_llm_slot(self) -> None:
         rows = [
             {
-                "external_id": "RST32615987873",
+                "external_id": "RST00000000202",
                 "title": "Поставка серверного оборудования виртуализации для проектов",
-                "price": 875_174_000,
+                "price": 900_000_000,
                 "score": 95,
                 "documents_with_text": 0,
                 "preparation_blocked_event": json.dumps(
@@ -3704,7 +3703,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
             {
                 "external_id": "generic",
                 "title": "Поставка оборудования",
-                "price": 87_064_664,
+                "price": 80_000_000,
                 "score": 90,
             },
         ]
@@ -3738,7 +3737,7 @@ class RunLLMForShortlistTest(unittest.TestCase):
             {
                 "external_id": "generic-valid",
                 "title": "Поставка оборудования",
-                "price": 87_064_664,
+                "price": 80_000_000,
                 "score": 90,
             },
         ]

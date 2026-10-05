@@ -66,7 +66,7 @@ class BackfillSourceDocumentsTest(unittest.TestCase):
             side_effect=audit_row,
         ):
             rows = backfill_source_documents.run_backfill(
-                [candidate("95881047")],
+                [candidate("00000034")],
                 apply=False,
                 limit_docs=5,
             )
@@ -103,7 +103,7 @@ class BackfillSourceDocumentsTest(unittest.TestCase):
             ) as prepare,
         ):
             rows = backfill_source_documents.run_backfill(
-                [candidate("95881047"), candidate("96621349")],
+                [candidate("00000034"), candidate("00000042")],
                 apply=True,
                 limit_docs=3,
             )
@@ -113,7 +113,7 @@ class BackfillSourceDocumentsTest(unittest.TestCase):
         self.assertEqual(rows[0]["rate_limited"], "true")
         self.assertEqual(rows[0]["planner_used"], "false")
         prepare.assert_called_once_with(
-            external_id="95881047",
+            external_id="00000034",
             limit_docs=3,
             force_redownload=False,
             overwrite_text=False,
@@ -159,7 +159,7 @@ class BackfillSourceDocumentsTest(unittest.TestCase):
             },
         ):
             run_targeted_document_download(
-                external_id="95881047",
+                external_id="00000034",
                 tender_id=None,
                 limit_docs=2,
                 force_redownload=False,

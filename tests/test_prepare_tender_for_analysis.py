@@ -73,15 +73,15 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
                     "event_type": "document_download_failed",
                     "message": (
                         "Document download returned empty response: "
-                        "external_id=95881047, document_id=445589013, "
+                        "external_id=00000034, document_id=000000109, "
                         "status_code=200, reason=empty_response"
                     ),
                 },
                 {
                     "event_type": "document_download_rejected",
                     "message": (
-                        "Rejected document download: external_id=95881047, "
-                        "document_id=445589014, filename='bad.html', "
+                        "Rejected document download: external_id=00000034, "
+                        "document_id=000000110, filename='bad.html', "
                         "detected_type='html', reason=html_response"
                     ),
                 },
@@ -93,12 +93,12 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
             [
                 {
                     "event_type": "document_download_failed",
-                    "document_id": "445589013",
+                    "document_id": "000000109",
                     "reason": "empty_response",
                 },
                 {
                     "event_type": "document_download_rejected",
-                    "document_id": "445589014",
+                    "document_id": "000000110",
                     "reason": "html_response",
                 },
             ],
@@ -109,12 +109,12 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
     ) -> None:
         tender = {
             "id": "tender-1",
-            "external_id": "95748890",
+            "external_id": "00000021",
             "title": "Поставка системы иммерсивного звука",
         }
         docs = [
             {
-                "id": "445000630",
+                "id": "000000105",
                 "title": "Приложение 1 Описание Объекта закупки иммерсивный звук",
             }
         ]
@@ -122,7 +122,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
         primary_docs = primary_technical_api_documents(tender, docs)
 
         self.assertEqual(len(primary_docs), 1)
-        self.assertEqual(primary_docs[0]["id"], "445000630")
+        self.assertEqual(primary_docs[0]["id"], "000000105")
 
     def test_load_downloaded_documents_uses_existing_schema_without_document_url(
         self,
@@ -147,9 +147,9 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
                 return [
                     {
                         "id": "doc-1",
-                        "filename": "445000630_Описание объекта закупки.docx",
+                        "filename": "000000105_Описание объекта закупки.docx",
                         "document_url": None,
-                        "storage_path": "data/documents/445000630_Описание объекта закупки.docx",
+                        "storage_path": "data/documents/000000105_Описание объекта закупки.docx",
                         "mime_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                         "size_bytes": 42,
                         "extracted_text": "technical text",
@@ -195,14 +195,14 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
             rows = load_downloaded_documents("tender-1")
 
         self.assertEqual(rows[0]["document_url"], None)
-        self.assertEqual(rows[0]["filename"], "445000630_Описание объекта закупки.docx")
+        self.assertEqual(rows[0]["filename"], "000000105_Описание объекта закупки.docx")
 
     def test_marketplace_auth_status_persists_blocked_event(self) -> None:
         started_at = datetime(2026, 5, 5, 10, 0, 0)
         docs = [{"id": "doc-1", "title": "\u0422\u0417"}]
         tender = {
             "id": "tender-1",
-            "external_id": "95653088",
+            "external_id": "00000015",
             "title": "Поставка оборудования",
         }
         recorded_events: list[tuple[str, str, dict]] = []
@@ -220,7 +220,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
                 "message": (
                     "Rejected document download: "
                     "html_hint='external_marketplace_auth_required', "
-                    "html_title='Корпоративная торговая секция ПАО «Ростелеком» на ЭТП «Росэлторг»'"
+                    "html_title='Корпоративная торговая секция ПАО «Учебный заказчик» на ЭТП «Учебная площадка»'"
                 ),
                 "created_at": started_at,
             }
@@ -262,28 +262,28 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
                 return_value=rejected_events,
             ),
         ):
-            result = prepare_tender_for_analysis(external_id="95653088", limit_docs=1)
+            result = prepare_tender_for_analysis(external_id="00000015", limit_docs=1)
 
         self.assertEqual(result.status, PreparationStatus.BLOCKED_BY_MARKETPLACE_AUTH)
         self.assertEqual(len(recorded_events), 1)
         tender_id, event_type, payload = recorded_events[0]
         self.assertEqual(tender_id, "tender-1")
         self.assertEqual(event_type, TARGETED_PREPARATION_BLOCKED_EVENT)
-        self.assertEqual(payload["external_id"], "95653088")
+        self.assertEqual(payload["external_id"], "00000015")
         self.assertEqual(payload["status"], "blocked_by_marketplace_auth")
         self.assertEqual(payload["reason"], "marketplace_auth")
         self.assertEqual(payload["documents_found"], 1)
         self.assertEqual(payload["documents_downloaded"], 0)
         self.assertEqual(payload["documents_with_text"], 0)
         self.assertEqual(payload["html_hint"], "external_marketplace_auth_required")
-        self.assertIn("Ростелеком", payload["html_title"])
+        self.assertIn("Учебный заказчик", payload["html_title"])
         self.assertIn("cooldown_until", payload)
 
     def test_no_valid_documents_status_persists_blocked_event(self) -> None:
         started_at = datetime(2026, 5, 5, 10, 0, 0)
         tender = {
             "id": "tender-1",
-            "external_id": "95633694",
+            "external_id": "00000013",
             "title": "Система хранения данных",
         }
         recorded_events: list[tuple[str, str, dict]] = []
@@ -316,14 +316,14 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
                 return_value=[],
             ),
         ):
-            result = prepare_tender_for_analysis(external_id="95633694", limit_docs=1)
+            result = prepare_tender_for_analysis(external_id="00000013", limit_docs=1)
 
         self.assertEqual(result.status, PreparationStatus.NO_VALID_DOCUMENTS)
         self.assertEqual(len(recorded_events), 1)
         tender_id, event_type, payload = recorded_events[0]
         self.assertEqual(tender_id, "tender-1")
         self.assertEqual(event_type, TARGETED_PREPARATION_BLOCKED_EVENT)
-        self.assertEqual(payload["external_id"], "95633694")
+        self.assertEqual(payload["external_id"], "00000013")
         self.assertEqual(payload["status"], "no_valid_documents")
         self.assertEqual(payload["reason"], "no_valid_documents")
         self.assertEqual(payload["documents_found"], 0)
@@ -465,16 +465,16 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
     def test_primary_technical_doc_missing_keeps_tender_not_ready(self) -> None:
         tender = {
             "id": "tender-1",
-            "external_id": "95748890",
+            "external_id": "00000021",
             "title": "Поставка серверного оборудования",
             "raw": {
                 "full": {
                     "documents": [
                         {
-                            "id": "445000630",
+                            "id": "000000105",
                             "title": "Приложение 1 Описание Объекта закупки.docx",
                         },
-                        {"id": "445000632", "title": "Проект контракта.docx"},
+                        {"id": "000000106", "title": "Проект контракта.docx"},
                     ]
                 }
             },
@@ -482,7 +482,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
         downloaded = [
             {
                 "id": "local-contract",
-                "filename": "445000632_Проект контракта.docx",
+                "filename": "000000106_Проект контракта.docx",
                 "extracted_text": "contract text",
             }
         ]
@@ -509,13 +509,13 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
     def test_primary_technical_doc_ready_after_extraction_allows_llm(self) -> None:
         tender = {
             "id": "tender-1",
-            "external_id": "95748890",
+            "external_id": "00000021",
             "title": "Поставка серверного оборудования",
             "raw": {
                 "full": {
                     "documents": [
                         {
-                            "id": "445000630",
+                            "id": "000000105",
                             "title": "Приложение 1 Описание Объекта закупки.docx",
                         }
                     ]
@@ -525,7 +525,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
         downloaded = [
             {
                 "id": "local-ooz",
-                "filename": "445000630_Приложение 1 Описание Объекта закупки.docx",
+                "filename": "000000105_Приложение 1 Описание Объекта закупки.docx",
                 "extracted_text": "technical text",
             }
         ]
@@ -546,19 +546,19 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
 
         self.assertTrue(status["required"])
         self.assertEqual(status["total"], 1)
-        self.assertEqual(status["processed"][0]["document_id"], "445000630")
+        self.assertEqual(status["processed"][0]["document_id"], "000000105")
         self.assertTrue(status["ready"])
         self.assertEqual(preparation_status, PreparationStatus.READY_FOR_LLM)
 
     def test_downloaded_primary_technical_doc_without_text_is_not_processed(self) -> None:
         tender = {
             "id": "tender-1",
-            "external_id": "95748890",
+            "external_id": "00000021",
             "title": "Поставка серверного оборудования",
             "raw": {
                 "full": {
                     "documents": [
-                        {"id": "445000630", "title": "Техническое задание.docx"}
+                        {"id": "000000105", "title": "Техническое задание.docx"}
                     ]
                 }
             },
@@ -566,7 +566,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
         downloaded = [
             {
                 "id": "local-ooz",
-                "filename": "445000630_Техническое задание.docx",
+                "filename": "000000105_Техническое задание.docx",
                 "extracted_text": "",
             }
         ]
@@ -581,13 +581,13 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
         started_at = datetime(2026, 5, 8, 12, 0, 0)
         tender = {
             "id": "tender-1",
-            "external_id": "95748890",
+            "external_id": "00000021",
             "title": "Поставка серверного оборудования",
             "raw": {
                 "full": {
                     "documents": [
                         {
-                            "id": "445000630",
+                            "id": "000000105",
                             "title": "Приложение 1 Описание Объекта закупки.docx",
                         }
                     ]
@@ -598,8 +598,8 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
         downloaded_docs = [
             {
                 "id": "local-ooz",
-                "filename": "445000630_Приложение 1 Описание Объекта закупки.docx",
-                "storage_path": "data/documents/zakupki360_95748890/445000630_ooz.docx",
+                "filename": "000000105_Приложение 1 Описание Объекта закупки.docx",
+                "storage_path": "data/documents/zakupki360_00000021/000000105_ooz.docx",
                 "extracted_text": "technical text",
                 "created_at": started_at,
             }
@@ -647,7 +647,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
                 return_value=[],
             ),
         ):
-            result = prepare_tender_for_analysis(external_id="95748890", limit_docs=1)
+            result = prepare_tender_for_analysis(external_id="00000021", limit_docs=1)
 
         self.assertEqual(result.status, PreparationStatus.READY_FOR_LLM)
         self.assertTrue(result.ready_for_llm)
@@ -660,7 +660,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
             primary_details["primary_technical_documents_processed"][0][
                 "document_id"
             ],
-            "445000630",
+            "000000105",
         )
 
     def test_rate_limited_targeted_download_requeues_then_recovers(self) -> None:
@@ -674,7 +674,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
         ]
         tender = {
             "id": "tender-1",
-            "external_id": "95543713",
+            "external_id": "00000009",
             "title": "Target tender",
         }
         collector = types.ModuleType("app.collector.documents")
@@ -772,8 +772,8 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
                 "app.pipeline.prepare_tender_for_analysis.record_targeted_retry_decision"
             ) as record_retry,
         ):
-            first = prepare_tender_for_analysis(external_id="95543713", limit_docs=2)
-            second = prepare_tender_for_analysis(external_id="95543713", limit_docs=2)
+            first = prepare_tender_for_analysis(external_id="00000009", limit_docs=2)
+            second = prepare_tender_for_analysis(external_id="00000009", limit_docs=2)
 
         self.assertEqual(first.status, PreparationStatus.PARTIAL_PREPARATION)
         first_details = first.steps["targeted_document_download"].details
@@ -795,7 +795,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
         ]
         tender = {
             "id": "tender-1",
-            "external_id": "95543713",
+            "external_id": "00000009",
             "title": "Target tender",
         }
         downloaded_docs = [
@@ -864,7 +864,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
                 "app.pipeline.prepare_tender_for_analysis.record_targeted_retry_decision"
             ) as record_retry,
         ):
-            result = prepare_tender_for_analysis(external_id="95543713", limit_docs=2)
+            result = prepare_tender_for_analysis(external_id="00000009", limit_docs=2)
 
         self.assertEqual(result.status, PreparationStatus.READY_FOR_LLM)
         self.assertTrue(result.ready_for_llm)
@@ -888,7 +888,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
         docs = [{"id": "tz", "title": "\u0422\u0417"}]
         tender = {
             "id": "tender-1",
-            "external_id": "95543713",
+            "external_id": "00000009",
             "title": "Target tender",
         }
         collector = types.ModuleType("app.collector.documents")
@@ -944,7 +944,7 @@ class PrepareTenderForAnalysisTest(unittest.TestCase):
                 "app.pipeline.prepare_tender_for_analysis.record_targeted_retry_decision"
             ) as record_retry,
         ):
-            result = prepare_tender_for_analysis(external_id="95543713", limit_docs=1)
+            result = prepare_tender_for_analysis(external_id="00000009", limit_docs=1)
 
         self.assertEqual(result.status, PreparationStatus.NO_VALID_DOCUMENTS)
         details = result.steps["targeted_document_download"].details

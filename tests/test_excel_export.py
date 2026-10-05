@@ -446,10 +446,10 @@ class ExcelExportTest(unittest.TestCase):
                 latest_sales_status="sales_in_work",
                 latest_sales_status_created_at=now - timedelta(minutes=5),
                 raw_full={
-                    "orderNumber": "32615959798",
+                    "orderNumber": "00000000201",
                     "lawName": "223-ФЗ",
                     "contactPerson": "Иван Иванов",
-                    "contactPhone": "+7 999 000-00-00",
+                    "contactPhone": "+7 000 000-00-00",
                     "contactEMail": "buyer@example.test",
                     "purchaseMethodName": "Запрос предложений",
                     "statusName": "Подача заявок",
@@ -458,8 +458,8 @@ class ExcelExportTest(unittest.TestCase):
                     "organizer": {
                         "id": "org-42",
                         "fullName": "ПАО Организатор",
-                        "inn": "7700000000",
-                        "kpp": "770001001",
+                        "inn": "0000000000",
+                        "kpp": "000000000",
                         "address": "Москва, ул. Тестовая, 1",
                     },
                 },
@@ -502,7 +502,7 @@ class ExcelExportTest(unittest.TestCase):
         self.assertEqual(headers, self.excel_export.BITRIX_EXPORT_COLUMNS)
         self.assertEqual(sheet["A2"].value.startswith("ООО Заказчик / Закупка bitrix-work"), True)
         self.assertEqual(sheet["C2"].value, "Иван Иванов")
-        self.assertEqual(sheet["D2"].value, "+7 999 000-00-00")
+        self.assertEqual(sheet["D2"].value, "+7 000 000-00-00")
         self.assertEqual(sheet["E2"].value, "buyer@example.test")
         self.assertEqual(sheet["H2"].value, "NEW")
         self.assertEqual(sheet["I2"].value, "1")
@@ -510,7 +510,7 @@ class ExcelExportTest(unittest.TestCase):
         self.assertEqual(sheet["M2"].value, "Y")
         self.assertEqual(sheet["N2"].value, "bitrix-work")
         self.assertEqual(sheet["Q2"].value, "2026-05-09 12:00:00")
-        self.assertEqual(sheet["T2"].value, "32615959798")
+        self.assertEqual(sheet["T2"].value, "00000000201")
         self.assertEqual(sheet["U2"].value, "143")
         self.assertEqual(sheet["V2"].value, "ЕИС")
         self.assertIn("Примечание менеджера:\n=перезвонить после обеда", sheet["G2"].value)
@@ -912,7 +912,7 @@ class ExcelExportTest(unittest.TestCase):
             raw_full={
                 "orderNumber": "REG-42",
                 "contactPerson": "Иван Иванов",
-                "contactPhone": "+7 999 000-00-00",
+                "contactPhone": "+7 000 000-00-00",
                 "contactEMail": "buyer@example.test",
                 "tenderUrl": "https://example.test/reg-42",
             },
@@ -921,7 +921,7 @@ class ExcelExportTest(unittest.TestCase):
         export_row = self.excel_export.excel_row_from_tender(row, now=now)
 
         self.assertEqual(export_row["ID закупки / external_id"], "contacts")
-        self.assertEqual(export_row["Контакт закупки"], "Иван Иванов, +7 999 000-00-00, buyer@example.test")
+        self.assertEqual(export_row["Контакт закупки"], "Иван Иванов, +7 000 000-00-00, buyer@example.test")
         self.assertEqual(export_row["Ссылка"], "https://example.test/tender")
 
     def test_export_files_open_as_plain_worksheets_without_table_xml(self) -> None:

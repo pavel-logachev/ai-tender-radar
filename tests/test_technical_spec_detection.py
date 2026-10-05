@@ -210,7 +210,7 @@ class TechnicalSpecDetectionTest(unittest.TestCase):
         tender = {
             "id": "tender-1",
             "title": "Поставка оборудования не требующего монтажа",
-            "external_id": "95721719",
+            "external_id": "00000018",
             "raw": {"full": {}, "short": {}},
         }
         documents = [
@@ -252,11 +252,11 @@ class TechnicalSpecDetectionTest(unittest.TestCase):
             context_builder.package_to_markdown(package),
         )
 
-    def test_context_builder_finds_section_level_tz_in_95721719_kd_materials(self) -> None:
+    def test_context_builder_finds_section_level_tz_in_synthetic_kd_materials(self) -> None:
         tender = {
-            "id": "tender-95721719",
+            "id": "tender-00000018",
             "title": "Поставка оборудования не требующего монтажа (ОНМ)",
-            "external_id": "95721719",
+            "external_id": "00000018",
             "raw": {"full": {}, "short": {}},
         }
         documents = [
@@ -359,7 +359,7 @@ class TechnicalSpecDetectionTest(unittest.TestCase):
         tender = {
             "id": "tender-1",
             "title": "Поставка оборудования не требующего монтажа",
-            "external_id": "95721719",
+            "external_id": "00000018",
             "raw": {"full": {}, "short": {}},
         }
         documents = [
@@ -428,7 +428,7 @@ class TechnicalSpecDetectionTest(unittest.TestCase):
         tender = {
             "id": "tender-1",
             "title": "Поставка оборудования не требующего монтажа",
-            "external_id": "95721719",
+            "external_id": "00000018",
             "raw": {"full": {}, "short": {}},
         }
         documents = [
@@ -470,7 +470,7 @@ class TechnicalSpecDetectionTest(unittest.TestCase):
         tender = {
             "id": "tender-1",
             "title": "Поставка оборудования не требующего монтажа",
-            "external_id": "95721719",
+            "external_id": "00000018",
             "raw": {"full": {}, "short": {}},
         }
         documents = [

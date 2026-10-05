@@ -601,10 +601,7 @@ class RouterAITwoPassTest(unittest.TestCase):
             package={
                 "tender": {
                     "customer_name": (
-                        "\u041a\u043e\u043c\u0438\u0442\u0435\u0442 "
-                        "\u0433\u043e\u0441\u0443\u0434\u0430\u0440\u0441\u0442\u0432\u0435\u043d\u043d\u044b\u0445 "
-                        "\u0437\u0430\u043a\u0443\u043f\u043e\u043a "
-                        "\u0433\u043e\u0440\u043e\u0434\u0430 \u041c\u043e\u0441\u043a\u0432\u044b"
+                        "Учебный комитет государственных закупок"
                     ),
                     "title": "\u041f\u043e\u0441\u0442\u0430\u0432\u043a\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u043e\u0432",
                 }
@@ -835,17 +832,17 @@ class RouterAITwoPassTest(unittest.TestCase):
     def test_build_package_blocks_llm_when_primary_technical_doc_is_not_processed(self) -> None:
         tender = {
             "id": "tender-id",
-            "external_id": "95748890",
+            "external_id": "00000021",
             "title": "Поставка серверного оборудования",
             "_llm_category": "servers",
             "raw": {
                 "full": {
                     "documents": [
                         {
-                            "id": "445000630",
+                            "id": "000000105",
                             "title": "Приложение 1 Описание Объекта закупки.docx",
                         },
-                        {"id": "445000632", "title": "Проект контракта.docx"},
+                        {"id": "000000106", "title": "Проект контракта.docx"},
                     ]
                 }
             },
@@ -853,7 +850,7 @@ class RouterAITwoPassTest(unittest.TestCase):
         documents = [
             {
                 "id": "local-contract",
-                "filename": "445000632_Проект контракта.docx",
+                "filename": "000000106_Проект контракта.docx",
                 "extracted_text": "contract text",
             }
         ]
@@ -865,7 +862,7 @@ class RouterAITwoPassTest(unittest.TestCase):
             self.assertRaisesRegex(RuntimeError, "primary_technical_document_missing"),
         ):
             tender_report.build_package_from_database(
-                external_id="95748890",
+                external_id="00000021",
                 max_spec_chars=1000,
                 max_other_chars=1000,
             )
@@ -875,13 +872,13 @@ class RouterAITwoPassTest(unittest.TestCase):
     def test_build_package_allows_lead_card_context_without_primary_technical_doc(self) -> None:
         tender = {
             "id": "tender-id",
-            "external_id": "95748890",
+            "external_id": "00000021",
             "title": "Поставка серверного оборудования",
             "raw": {
                 "full": {
                     "documents": [
                         {
-                            "id": "445000630",
+                            "id": "000000105",
                             "title": "Приложение 1 Описание Объекта закупки.docx",
                         }
                     ]
@@ -891,7 +888,7 @@ class RouterAITwoPassTest(unittest.TestCase):
         documents = []
         package = {"meta": {}, "documents_summary": []}
         readiness = {
-            "external_id": "95748890",
+            "external_id": "00000021",
             "docs_before": 0,
             "docs_with_text_before": 0,
             "docs_after": 0,
@@ -913,7 +910,7 @@ class RouterAITwoPassTest(unittest.TestCase):
             ) as prepare_documents,
         ):
             tender_id, built_package = tender_report.build_package_from_database(
-                external_id="95748890",
+                external_id="00000021",
                 max_spec_chars=1000,
                 max_other_chars=1000,
                 report_kind="lead",
@@ -958,15 +955,15 @@ class RouterAITwoPassTest(unittest.TestCase):
             patch.object(tender_report, "get_documents", return_value=prepared_documents),
         ):
             readiness, documents = tender_report.prepare_lead_documents_for_report(
-                external_id="95748890",
-                tender={"id": "tender-id", "external_id": "95748890"},
+                external_id="00000021",
+                tender={"id": "tender-id", "external_id": "00000021"},
                 documents=[],
                 primary_status={"required": False, "ready": True, "reason": None},
             )
 
         self.assertEqual(documents, prepared_documents)
         self.assertEqual(len(prepare_calls), 1)
-        self.assertEqual(prepare_calls[0]["external_id"], "95748890")
+        self.assertEqual(prepare_calls[0]["external_id"], "00000021")
         self.assertEqual(prepare_calls[0]["limit_docs"], 5)
         self.assertTrue(readiness["targeted_download_triggered"])
         self.assertTrue(readiness["extraction_retry_triggered"])
@@ -1094,7 +1091,7 @@ class RouterAITwoPassTest(unittest.TestCase):
             contextlib.redirect_stdout(io.StringIO()),
         ):
             result = tender_report.run_routerai_two_pass_report(
-                external_id="95561178",
+                external_id="00000010",
                 tender_id="tender-id",
                 package=package,
                 context_markdown="Tender context",
@@ -1147,7 +1144,7 @@ class RouterAITwoPassTest(unittest.TestCase):
             contextlib.redirect_stdout(io.StringIO()),
         ):
             result = tender_report.run_routerai_two_pass_report(
-                external_id="95543713",
+                external_id="00000009",
                 tender_id="tender-id",
                 package=package,
                 context_markdown="initial large context",
@@ -1203,7 +1200,7 @@ class RouterAITwoPassTest(unittest.TestCase):
             contextlib.redirect_stdout(io.StringIO()),
         ):
             result = tender_report.run_routerai_two_pass_report(
-                external_id="95543713",
+                external_id="00000009",
                 tender_id="tender-id",
                 package=package,
                 context_markdown="initial large context",
@@ -1250,7 +1247,7 @@ class RouterAITwoPassTest(unittest.TestCase):
             self.assertRaises(RuntimeError),
         ):
             tender_report.run_routerai_two_pass_report(
-                external_id="95543713",
+                external_id="00000009",
                 tender_id="tender-id",
                 package=package,
                 context_markdown="initial large context",

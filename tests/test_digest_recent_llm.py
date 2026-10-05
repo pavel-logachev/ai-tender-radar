@@ -320,7 +320,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         cursor = FakeCursor(
             [
                 today_row(
-                    "RST32615987873",
+                    "RST00000000202",
                     deadline_at=datetime(2030, 5, 5, 12, 0, tzinfo=timezone.utc),
                     preparation_blocked_event=json.dumps({"status": "blocked_by_marketplace_auth"}),
                     docs_count=0,
@@ -341,10 +341,10 @@ class DigestRecentLLMTest(unittest.TestCase):
                 ),
             ]
         )
-        cursor.rows[0]["external_id"] = "RST32615987873"
+        cursor.rows[0]["external_id"] = "RST00000000202"
         cursor.rows[0]["title"] = "Поставка серверного оборудования виртуализации для проектов"
-        cursor.rows[0]["initial_price"] = 875_174_000
-        cursor.rows[0]["url"] = "https://www.roseltorg.ru/procedure/32615987873"
+        cursor.rows[0]["initial_price"] = 900_000_000
+        cursor.rows[0]["url"] = "https://example.org/procedure/00000000202"
         cursor.rows[1]["title"] = "Антивирусное продление"
 
         business_rules = sys.modules["app.business_rules"]
@@ -377,7 +377,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         self.assertIn("AI Tender Radar - утренний shortlist", output)
         self.assertIn("📄 Нужны документы для LLM-разбора", output)
         self.assertIn("документы закрыты на площадке, нужно скачать КД/ТЗ вручную", output)
-        self.assertIn("https://www.roseltorg.ru/procedure/32615987873", output)
+        self.assertIn("https://example.org/procedure/00000000202", output)
         self.assertNotIn("service-noise", output)
         self.assertNotIn("Антивирусное продление", output)
         self.assertNotIn("hidden-no-go", output)
@@ -717,7 +717,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         rows = [
             {
                 "tender_id": "generic-ict",
-                "external_id": "95722308",
+                "external_id": "00000019",
                 "title": "Монтаж и настройка оборудования ИКТ",
                 "recommendation": "go",
             },
@@ -815,17 +815,17 @@ class DigestRecentLLMTest(unittest.TestCase):
         now = datetime(2026, 5, 5, 12, 0, tzinfo=timezone.utc)
         rows = [
             today_row(
-                "RST32615987873",
+                "RST00000000202",
                 deadline_at=now + timedelta(days=7),
                 preparation_blocked_event=json.dumps({"status": "blocked_by_marketplace_auth"}),
                 docs_count=0,
                 docs_with_text=0,
             )
         ]
-        rows[0]["external_id"] = "RST32615987873"
+        rows[0]["external_id"] = "RST00000000202"
         rows[0]["title"] = "Поставка серверного оборудования виртуализации для проектов"
-        rows[0]["initial_price"] = 875_174_000
-        rows[0]["url"] = "https://www.roseltorg.ru/procedure/32615987873"
+        rows[0]["initial_price"] = 900_000_000
+        rows[0]["url"] = "https://example.org/procedure/00000000202"
 
         with (
             patch.object(self.digest, "get_digest_rows", return_value=rows),
@@ -843,7 +843,7 @@ class DigestRecentLLMTest(unittest.TestCase):
             cards, hidden_deadline = self.digest.build_digest_cards_with_stats(limit=None, now=now)
 
         self.assertEqual(hidden_deadline, 0)
-        self.assertEqual([card.tender_id for card in cards], ["RST32615987873"])
+        self.assertEqual([card.tender_id for card in cards], ["RST00000000202"])
         self.assertIn("📄 Нужны документы для LLM-разбора", cards[0].message_text)
         self.assertIn(
             "Причина: документы закрыты на площадке, нужно скачать КД/ТЗ вручную.",
@@ -853,7 +853,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         self.assertIn("📞 Для знакомства", cards[0].message_text)
         self.assertNotIn("Действие:", cards[0].message_text)
         self.assertNotIn("Статус обработки:", cards[0].message_text)
-        self.assertIn("Ссылка: https://www.roseltorg.ru/procedure/32615987873", cards[0].message_text)
+        self.assertIn("Ссылка: https://example.org/procedure/00000000202", cards[0].message_text)
 
     def test_full_backlog_hides_no_go_but_keeps_deadline_risk_manual_document_items(self) -> None:
         now = datetime(2026, 5, 5, 12, 0, tzinfo=timezone.utc)
@@ -964,7 +964,7 @@ class DigestRecentLLMTest(unittest.TestCase):
 
     def test_llm_block_marks_report_stale_after_primary_technical_doc_processed(self) -> None:
         report_created_at = datetime(2026, 5, 5, 10, 0, tzinfo=timezone.utc)
-        tender = today_row("95748890", llm_recommendation="go")
+        tender = today_row("00000021", llm_recommendation="go")
         tender["llm_report_created_at"] = report_created_at
         tender["latest_primary_technical_document_created_at"] = (
             report_created_at + timedelta(minutes=15)
@@ -1000,22 +1000,22 @@ class DigestRecentLLMTest(unittest.TestCase):
         )
 
     def test_full_card_is_compact_call_first_outreach_queue_item(self) -> None:
-        tender = today_row("95622481", recommendation="go", llm_recommendation="go")
+        tender = today_row("00000012", recommendation="go", llm_recommendation="go")
         tender.update(
             {
                 "title": "Поставка серверов",
                 "initial_price": 1_000_000,
-                "url": "https://example.test/procedure/95622481",
+                "url": "https://example.test/procedure/00000012",
                 "published_at": datetime(2026, 5, 1, 9, 0, tzinfo=timezone.utc),
                 "deadline_at": datetime(2026, 5, 10, 12, 0, tzinfo=timezone.utc),
                 "raw": {
                     "full": {
-                        "orderNumber": "95622481",
+                        "orderNumber": "00000012",
                         "tenderTypeName": "Электронный аукцион",
                         "tenderStageName": "Подача заявок",
                         "short": {"etpName": "ЭТП"},
                         "contactPerson": "Иван Иванов",
-                        "contactPhone": "+7 999 000-00-00",
+                        "contactPhone": "+7 000 000-00-00",
                         "contactEMail": "customer@example.test",
                         "deliveryPlace": "Москва",
                         "deliveryTerm": "30 календарных дней",
@@ -1052,8 +1052,8 @@ class DigestRecentLLMTest(unittest.TestCase):
         self.assertIn("НМЦК: 1 000 000 ₽", card)
         self.assertIn("Срок подачи: 10.05.2026 12:00", card)
         self.assertIn("Заказчик:", card)
-        self.assertIn("Контакт закупки: Иван Иванов, +7 999 000-00-00, customer@example.test", card)
-        self.assertIn("Ссылка: https://example.test/procedure/95622481", card)
+        self.assertIn("Контакт закупки: Иван Иванов, +7 000 000-00-00, customer@example.test", card)
+        self.assertIn("Ссылка: https://example.test/procedure/00000012", card)
 
         outreach = self.outreach_block(card)
         self.assertIn("Кого искать:", outreach)
@@ -1085,20 +1085,20 @@ class DigestRecentLLMTest(unittest.TestCase):
         self.assertIn("Ссылка: не найдена", card)
 
     def test_procedure_url_uses_223_order_number_before_stale_notice_info_id(self) -> None:
-        tender = lead_report_row("95510304")
+        tender = lead_report_row("00000007")
         broken_url = (
             "https://zakupki.gov.ru/epz/order/notice/notice223/"
-            "common-info.html?noticeInfoId=19716023"
+            "common-info.html?noticeInfoId=00000401"
         )
         expected_url = (
             "https://zakupki.gov.ru/epz/order/notice/notice223/"
-            "common-info.html?regNumber=32615959798"
+            "common-info.html?regNumber=00000000201"
         )
         tender["url"] = broken_url
         tender["raw"] = {
             "full": {
                 "lawId": 223,
-                "orderNumber": "32615959798",
+                "orderNumber": "00000000201",
                 "tenderUrl": broken_url,
             }
         }
@@ -1116,7 +1116,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         tender["raw"] = {
             "full": {
                 "lawId": 44,
-                "orderNumber": "123456789012",
+                "orderNumber": "000000000012",
                 "tenderUrl": "https://example.test/from-z360",
             }
         }
@@ -1259,11 +1259,11 @@ class DigestRecentLLMTest(unittest.TestCase):
     def test_outreach_who_to_find_handles_procurement_center_customer(self) -> None:
         tender = today_row("procurement-center", llm_recommendation="go")
         tender["title"] = "Поставка серверов"
-        tender["customer_name"] = "Комитет государственных закупок города Москвы"
+        tender["customer_name"] = "Учебный комитет государственных закупок"
         tender["raw"] = {
             "full": {
                 "contactPerson": "Закупочный специалист",
-                "contactPhone": "+7 999 000-00-00",
+                "contactPhone": "+7 000 000-00-00",
             }
         }
 
@@ -1276,12 +1276,12 @@ class DigestRecentLLMTest(unittest.TestCase):
         )
 
     def test_processing_status_uses_api_documents_count_when_available(self) -> None:
-        tender = today_row("95721719", docs_count=2, docs_with_text=2)
+        tender = today_row("00000018", docs_count=2, docs_with_text=2)
         tender["raw"] = {
             "full": {
                 "documents": [
-                    {"id": "notice", "title": "444854856_1_Извещение_ОНМ_серверы пк.docx"},
-                    {"id": "contract", "title": "444854860_2_Проект договора обор-е.docx"},
+                    {"id": "notice", "title": "000000103_1_Извещение_ОНМ_серверы пк.docx"},
+                    {"id": "contract", "title": "000000104_2_Проект договора обор-е.docx"},
                     {"id": "kd", "title": "2_КД_материалы_ОНМ_серверы пк.docx"},
                     {"id": "appendix", "title": "Приложение 2 Техническое задание.docx"},
                 ]
@@ -1319,7 +1319,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         self.assertIn(warning, self.digest.document_analysis_block(tender))
 
     def test_preliminary_no_tech_spec_card_marks_warning_and_caps_confidence(self) -> None:
-        tender = today_row("95622481", llm_recommendation="go")
+        tender = today_row("00000012", llm_recommendation="go")
         tender["docs_with_text"] = 2
         tender["document_risk_result"] = {
             "documents_with_text": 2,
@@ -1364,7 +1364,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         self.assertEqual(self.digest.recent_llm_recommendation(tender), "maybe")
 
     def test_references_only_specification_keeps_preliminary_warning(self) -> None:
-        tender = today_row("95721719", llm_recommendation="go")
+        tender = today_row("00000018", llm_recommendation="go")
         tender["docs_with_text"] = 1
         tender["document_risk_result"] = {
             "documents_with_text": 1,
@@ -1910,7 +1910,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         now = datetime(2026, 5, 5, 12, 0, tzinfo=timezone.utc)
         rows = [
             today_row(
-                "RST32615987873",
+                "RST00000000202",
                 deadline_at=now + timedelta(days=7),
                 preparation_blocked_event=json.dumps({"reason": "marketplace_auth"}),
                 docs_count=0,
@@ -1934,7 +1934,7 @@ class DigestRecentLLMTest(unittest.TestCase):
             selected, manual_rows, stats = self.digest.select_digest_rows_today(limit=10, now=now)
 
         self.assertEqual(selected, [])
-        self.assertEqual([item["tender_id"] for item in manual_rows], ["RST32615987873"])
+        self.assertEqual([item["tender_id"] for item in manual_rows], ["RST00000000202"])
         self.assertEqual(manual_rows[0]["_manual_document_reason"], "preparation_blocked=marketplace_auth")
         self.assertEqual(stats.manual_documents_needed, 1)
         self.assertEqual(stats.hidden_no_go, 0)
@@ -1985,7 +1985,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         now = datetime(2026, 5, 5, 12, 0, tzinfo=timezone.utc)
         rows = [
             today_row(
-                "95633694",
+                "00000013",
                 deadline_at=now + timedelta(days=4),
                 preparation_blocked_event=json.dumps({"status": "no_valid_documents"}),
                 docs_count=0,
@@ -1994,7 +1994,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         ]
         rows[0]["title"] = "Поставка серверов"
         rows[0]["initial_price"] = 2_500_000
-        rows[0]["url"] = "https://example.test/procedure/95633694"
+        rows[0]["url"] = "https://example.test/procedure/00000013"
         rows[0]["raw"] = {
             "full": {
                 "lawId": 3,
@@ -2006,14 +2006,14 @@ class DigestRecentLLMTest(unittest.TestCase):
             cards, manual_cards, stats = self.digest.build_digest_cards_today_with_stats(limit=10, now=now)
 
         self.assertEqual(cards, [])
-        self.assertEqual([card.tender_id for card in manual_cards], ["95633694"])
+        self.assertEqual([card.tender_id for card in manual_cards], ["00000013"])
         self.assertEqual(stats.manual_documents_needed, 1)
         self.assertIn("📄 Нужны документы для LLM-разбора", manual_cards[0].message_text)
         self.assertIn("Поставка серверов", manual_cards[0].message_text)
         self.assertIn("НМЦК: 2 500 000 ₽", manual_cards[0].message_text)
         self.assertIn("Срок подачи:", manual_cards[0].message_text)
         self.assertIn("Заказчик:", manual_cards[0].message_text)
-        self.assertIn("Ссылка: https://example.test/procedure/95633694", manual_cards[0].message_text)
+        self.assertIn("Ссылка: https://example.test/procedure/00000013", manual_cards[0].message_text)
         self.assertIn(
             "Причина: документы закрыты на площадке или не отдаются автоматически, нужно скачать КД/ТЗ вручную.",
             manual_cards[0].message_text,
@@ -2030,7 +2030,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         now = datetime(2026, 5, 5, 12, 0, tzinfo=timezone.utc)
         rows = [
             today_row(
-                "95633695",
+                "00000014",
                 deadline_at=now + timedelta(days=4),
                 preparation_blocked_event=json.dumps({"status": "blocked_by_marketplace_auth"}),
                 docs_count=0,
@@ -2043,7 +2043,7 @@ class DigestRecentLLMTest(unittest.TestCase):
             cards, manual_cards, stats = self.digest.build_digest_cards_today_with_stats(limit=10, now=now)
 
         self.assertEqual(cards, [])
-        self.assertEqual([card.tender_id for card in manual_cards], ["95633695"])
+        self.assertEqual([card.tender_id for card in manual_cards], ["00000014"])
         self.assertEqual(stats.manual_documents_needed, 1)
 
         text = manual_cards[0].message_text
@@ -2803,7 +2803,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         now = datetime(2026, 5, 5, 12, 0, tzinfo=timezone.utc)
         rows = [
             lead_report_row(
-                "95901843",
+                "00000035",
                 priority="medium",
                 report_recommendation="maybe",
                 created_at=now,
@@ -2812,7 +2812,7 @@ class DigestRecentLLMTest(unittest.TestCase):
 
         selected, stats = self.digest.split_operational_lead_all_rows(rows, limit=None)
 
-        self.assertEqual([item["tender_id"] for item in selected], ["95901843"])
+        self.assertEqual([item["tender_id"] for item in selected], ["00000035"])
         self.assertEqual(stats.shown, 1)
         self.assertEqual(stats.hidden_negative_feedback, 0)
 
@@ -3044,7 +3044,7 @@ class DigestRecentLLMTest(unittest.TestCase):
             "raw": {
                 "full": {
                     "contactPerson": "Иван Иванов",
-                    "contactPhone": "+7 999 000-00-00",
+                    "contactPhone": "+7 000 000-00-00",
                     "contactEMail": "buyer@example.test",
                 }
             },
@@ -3140,7 +3140,7 @@ class DigestRecentLLMTest(unittest.TestCase):
     def test_recent_digest_sees_wrapped_customer_lead_report(self) -> None:
         now = datetime(2026, 5, 5, 12, 0, tzinfo=timezone.utc)
         tender = lead_report_row(
-            "95901843",
+            "00000035",
             report_recommendation="maybe",
             created_at=now - timedelta(minutes=20),
         )
@@ -3151,7 +3151,7 @@ class DigestRecentLLMTest(unittest.TestCase):
         with patch.object(self.digest, "get_recent_llm_digest_rows", return_value=[tender]):
             cards = self.digest.build_recent_llm_digest_cards(24, limit=5, now=now)
 
-        self.assertEqual([card.tender_id for card in cards], ["95901843"])
+        self.assertEqual([card.tender_id for card in cards], ["00000035"])
         self.assertIn(
             self.digest.document_status_label("technical_spec_found"),
             cards[0].message_text,

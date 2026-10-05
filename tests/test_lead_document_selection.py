@@ -331,8 +331,8 @@ class LeadDocumentSelectionTest(unittest.TestCase):
             + "Приложение № 1 к техническому заданию\n"
             + "Спецификация\n"
             + "№ п/п | Наименование товара | Предельная цена единицы товара (руб.) | Кол-во, шт. | Назначение | Место поставки\n"
-            + "Полка расширения, Артикул ABC-123 | 814 240,00 | 1 | расширение емкости | Москва\n"
-            + "Твердотельный накопитель, модель SSD-960 | 214 120,00 | 24 | накопитель | Москва\n"
+            + "Полка расширения, Артикул ABC-123 | 800 000,00 | 1 | расширение емкости | Москва\n"
+            + "Твердотельный накопитель, модель SSD-960 | 200 000,00 | 24 | накопитель | Москва\n"
         )
 
         result = document_selector.select_documents_for_lead_report(
@@ -340,7 +340,7 @@ class LeadDocumentSelectionTest(unittest.TestCase):
             [
                 {
                     "id": "embedded-general-doc",
-                    "filename": "445429870_Извещение и документация о закупке.docx",
+                    "filename": "000000108_Извещение и документация о закупке.docx",
                     "extracted_text": text,
                 }
             ],
@@ -352,7 +352,7 @@ class LeadDocumentSelectionTest(unittest.TestCase):
         self.assertEqual(result["primary_document_id"], "embedded-general-doc")
         self.assertEqual(
             result["primary_document_title"],
-            "445429870_Извещение и документация о закупке.docx",
+            "000000108_Извещение и документация о закупке.docx",
         )
         self.assertIn("Раздел 3. Техническое задание", result["primary_section_hint"])
         self.assertIn("Приложение № 1 к техническому заданию", result["primary_section_hint"])
@@ -380,7 +380,7 @@ class LeadDocumentSelectionTest(unittest.TestCase):
             [
                 {
                     "id": "standalone-tz",
-                    "filename": "445415777_ТехЗадание.pdf",
+                    "filename": "000000107_ТехЗадание.pdf",
                     "extracted_text": (
                         "Техническое задание\n"
                         "Наименование товара | Характеристики | Количество | Ед. изм.\n"
@@ -394,7 +394,7 @@ class LeadDocumentSelectionTest(unittest.TestCase):
         self.assertEqual(result["status"], "technical_spec_found")
         self.assertEqual(result["selector_status"], "technical_spec_found")
         self.assertEqual(result["primary_document_id"], "standalone-tz")
-        self.assertEqual(result["primary_document_title"], "445415777_ТехЗадание.pdf")
+        self.assertEqual(result["primary_document_title"], "000000107_ТехЗадание.pdf")
         self.assertEqual(result["primary_document_confidence"], DOCUMENT_CONFIDENCE_HIGH)
         self.assertEqual(result["primary_document_source_kind"], DOCUMENT_SOURCE_TECHNICAL_SPEC)
         self.assertTrue(result["primary_document_is_full_technical_spec"])
