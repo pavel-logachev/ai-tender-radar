@@ -28,6 +28,7 @@ jobs:
           --health-timeout 5s
           --health-retries 12
     env:
+      PYTHONUTF8: "1"
       DATABASE_URL: postgresql://atr_ci:ci-only-not-a-secret@127.0.0.1:5432/atr_ci
     steps:
       - name: Check out source
@@ -57,7 +58,7 @@ jobs:
       - name: Validate source and migrations
         run: |
           python tools/check_public_boundary.py
-          python -m compileall -q app agent_radar scripts
+          python -m compileall -q app agent_radar scripts tests
           python scripts/apply_migrations.py --dry-run
 
       - name: Verify clean PostgreSQL bootstrap

@@ -8,16 +8,17 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Callable
 
 from agent_radar.lead_agent import agent as A
 from agent_radar.lead_agent.card import deliverable, render_card
 from agent_radar.lead_agent.grounding import ground_result
-from agent_radar.lead_agent.store import LeadStore
+from agent_radar.lead_agent.store import LeadStore, version
 
 MAX_ATTEMPTS = 2
+DOCUMENT_WAIT_HOURS = 24  # a purchase closing sooner is researched without its queued files
 _RANK = {"A": 0, "B": 1, "C": 2, None: 3}
 
 
@@ -28,21 +29,29 @@ def _rows(source_path: Path) -> list[dict]:
     rows = data.get("rows")
     if not isinstance(rows, list):
         raise ValueError("analysis source has no rows")
-    return [row for row in rows if isinstance(row, dict) and isinstance(row.get("card"), dict) and row.get("fingerprint")]
+    return [row for row in rows if isinstance(row, dict) and isinstance(row.get("card"), dict)]
 
 
 def _deadline(row: dict) -> str:
     return str((row.get("opportunity") or {}).get("acceptance_end_date") or "9999")
 
 
+def _documents_pending(row: dict) -> bool:
+    return any(isinstance(gap, dict) and gap.get("reason") == "run_download_budget" for gap in row.get("gaps") or [])
+
+
 def select(rows: list[dict], store: LeadStore, *, include_history: bool, now: datetime) -> list[dict]:
     """New procurement versions only; closed or expired procedures are history unless explicitly requested."""
     chosen = []
     for row in rows:
-        if store.has(row["card"]["id"], row["fingerprint"]):
+        if store.has(row["card"]["id"], version(row)):
             continue
         opportunity = row.get("opportunity") or {}
         active = opportunity.get("status") == "proposal" and _deadline(row) > now.strftime("%Y-%m-%dT%H:%M:%SZ")
+        # Files the source has queued arrive within a few refreshes and make a new version: researching now
+        # would pay twice and send two cards. Wait for them unless the deadline is close.
+        if _documents_pending(row) and _deadline(row) > (now + timedelta(hours=DOCUMENT_WAIT_HOURS)).strftime("%Y-%m-%dT%H:%M:%SZ"):
+            continue
         if active or include_history:
             chosen.append(row)
     chosen.sort(key=_deadline)  # most urgent first
@@ -82,23 +91,35 @@ def process(source_path: Path, store: LeadStore, *, api_key: str, model: str = A
             if second_result is not None and (result is None or _RANK[second_result.get("grade")] < _RANK[result.get("grade")]):
                 result, used_model = second_result, fallback_model
         if result is None:
-            if store.bump_attempt(card["id"], row["fingerprint"]) < MAX_ATTEMPTS:
+            if store.bump_attempt(card["id"], version(row)) < MAX_ATTEMPTS:
                 counts["failed"] += 1
                 continue
             result = {"verdict": "failed", "grade": None, "one_line": "Агент не вернул разбираемый результат"}
+        if store.delivered_before(card["id"]):
+            result["update"] = True  # the card says it replaces one the managers already have
         ok = deliverable(result)
         try:
             text = render_card(result, card.get("source_url")) if ok else None
         except ValueError:
             text, ok = None, False
-        saved = store.save(tender_id=card["id"], fingerprint=row["fingerprint"], model=used_model,
+        saved = store.save(tender_id=card["id"], fingerprint=version(row), model=used_model,
                            cost_usd=round(run_cost, 5), tokens_in=tokens[0], tokens_out=tokens[1], tool_calls=tokens[2],
-                           result=result, card_html=text, deliverable=ok)
+                           result=result, card_html=text, deliverable=ok,
+                           deadline=(row.get("opportunity") or {}).get("acceptance_end_date"))
         if saved:
             counts["saved"] += 1
             counts["deliverable"] += int(ok)
     counts["cost_usd"] = round(counts["cost_usd"], 4)
     return counts
+
+
+def _heartbeat(state_root: Path, fields: dict) -> None:
+    """Outcome of the latest run, read by the health check: a silent research stage must be noticed."""
+    path = state_root / "leads-research.json"
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps({"at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), **fields}),
+                         encoding="utf-8")
+    os.replace(temporary, path)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -116,10 +137,16 @@ def main(argv: list[str] | None = None) -> int:
     if not api_key:
         print("OPENROUTER_API_KEY is required", file=sys.stderr)
         return 2
-    store = LeadStore(Path(args.state_root) / "leads.sqlite3")
-    counts = process(Path(args.source), store, api_key=api_key, model=args.model,
-                     fallback_model=None if args.no_fallback else args.fallback_model, limit=args.limit,
-                     max_run_cost=args.max_run_cost, include_history=args.include_history)
+    state_root = Path(args.state_root)
+    store = LeadStore(state_root / "leads.sqlite3")
+    try:
+        counts = process(Path(args.source), store, api_key=api_key, model=args.model,
+                         fallback_model=None if args.no_fallback else args.fallback_model, limit=args.limit,
+                         max_run_cost=args.max_run_cost, include_history=args.include_history)
+    except Exception as error:
+        _heartbeat(state_root, {"error": type(error).__name__})
+        raise
+    _heartbeat(state_root, counts)
     print(json.dumps({**counts, **store.stats()}, sort_keys=True))
     return 0
 

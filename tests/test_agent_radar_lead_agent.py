@@ -1,4 +1,6 @@
-"""Offline tests for the prompt-driven lead research agent: tools, loop, grounding, card, store, delivery."""
+"""All customer data is synthetic; phone area code 000 and INN 0000000000 are invalid.
+
+Offline tests for the prompt-driven lead research agent: tools, loop, grounding, card, store, delivery."""
 from __future__ import annotations
 
 import asyncio
@@ -13,35 +15,33 @@ from unittest.mock import AsyncMock, patch
 import httpx
 
 from agent_radar.lead_agent import agent as A
-from agent_radar.lead_agent import card, delivery, export, feedback, grounding, runner, tools
+from agent_radar.lead_agent import card, delivery, export, feedback, grounding, health, runner, tools
 from agent_radar.lead_agent.store import LeadStore
 
 NOW = datetime(2026, 10, 1, 9, 0, tzinfo=timezone.utc)
 
 
-def make_row(tender_id="example-source:1", status="proposal", deadline="2026-10-05T09:00:00Z", fingerprint="fp1"):
-    return {"fingerprint": fingerprint,
-            "card": {"id": tender_id, "title": "Поставка серверов", "customer_name": "ООО Заказчик",
+def make_row(tender_id="example-source:1", status="proposal", deadline="2026-10-05T09:00:00Z"):
+    return {"card": {"id": tender_id, "title": "Поставка серверов", "customer_name": "ООО Учебный заказчик",
                      "source_url": "https://tenders.example.org/process/light/x", "description": "Нужны 2 сервера",
-                     "documents": [{"id": "d1", "title": "ТЗ", "text": "Контакт: Иванов Иван тел. +7 (495) 123-45-67"},
-                                   {"id": "opportunity:context", "title": "ctx", "text": "legacy enrichment must stay hidden"}]},
-            "opportunity": {"buyer": {"inn": "7707083893"}, "status": status, "publication_date": "2026-09-20T00:00:00Z",
+                     "documents": [{"id": "d1", "title": "ТЗ", "text": "Контакт: Иванов Иван тел. +7 (000) 000-00-00"}]},
+            "opportunity": {"buyer": {"inn": "0000000000"}, "status": status, "publication_date": "2026-09-20T00:00:00Z",
                             "acceptance_end_date": deadline}}
 
 
 GOOD = {"verdict": "lead", "grade": "A", "one_line": "Заказчик покупает 2 сервера",
         "signal": {"what_they_buy": "2 сервера", "deadline": "05.10.2026"},
-        "customer": {"name": "ООО Заказчик", "economics_short": "Крупный, выручка 1 млрд"},
-        "contacts": [{"name": "Иванов Иван", "role": "закупки", "phone": "+7 (495) 123-45-67", "email": None}],
+        "customer": {"name": "ООО Учебный заказчик", "economics_short": "Крупный, выручка 1 млрд"},
+        "contacts": [{"name": "Иванов Иван", "role": "закупки", "phone": "+7 (000) 000-00-00", "email": None}],
         "talk_track": {"opening": "Здравствуйте", "hooks": ["a", "b"], "questions": ["q"]},
         "important": None, "gaps": ["ИТ-руководитель не найден"]}
-READ = "Контакт: Иванов Иван тел. +7 (495) 123-45-67"
+READ = "Контакт: Иванов Иван тел. +7 (000) 000-00-00"
 
 
 class ToolsTest(unittest.TestCase):
     def test_non_public_and_unsafe_urls_are_refused(self):
         for url in ("http://127.0.0.1/", "http://10.0.0.5/x", "http://[::1]/", "http://169.254.169.254/latest",
-                    "file:///etc/passwd", "ftp://example.com/", "https://user:pw@example.com/"):
+                    "file:///etc/passwd", "ftp://example.com/", "https://user:" + "pw@example.com/"):
             with self.subTest(url=url):
                 self.assertIsNotNone(tools.public_problem(url))
         self.assertTrue(tools.fetch_page("http://127.0.0.1/").startswith("refused"))
@@ -73,10 +73,10 @@ class ToolsTest(unittest.TestCase):
         self.assertEqual(data["years"][-1]["revenue_2110"], 20250)
         self.assertLess(len(json.dumps(data)), 3000)
 
-    def test_legacy_enrichment_is_not_exposed(self):
+    def test_procedure_lists_its_documents_and_reads_them(self):
         procedure = tools.TenderTools(make_row())
-        self.assertNotIn("legacy enrichment", procedure.read_procedure())
-        self.assertEqual(procedure.read_document("opportunity:context"), "no such document")
+        self.assertEqual([doc["doc_id"] for doc in json.loads(procedure.read_procedure())["documents"]], ["d1"])
+        self.assertEqual(procedure.read_document("d2"), "no such document")
         self.assertIn("Иванов", procedure.read_document("d1"))
 
 
@@ -139,7 +139,7 @@ class GroundingTest(unittest.TestCase):
 
     def test_invented_phone_and_email_are_removed_and_grade_recomputed(self):
         bad = json.loads(json.dumps(GOOD))
-        bad["contacts"][0].update(phone="+7 (999) 000-11-22", email="ivan@example.org")
+        bad["contacts"][0].update(phone="+7 (000) 000-11-22", email="ivan@example.org")
         result = grounding.ground_result(bad, READ)
         contact = result["contacts"][0]
         self.assertIsNone(contact["phone"])
@@ -156,7 +156,7 @@ class GroundingTest(unittest.TestCase):
 
     def test_name_not_literally_in_sources_is_dropped(self):
         bad = json.loads(json.dumps(GOOD))
-        bad["contacts"][0]["name"] = "Ступарь Екатерина"  # derived from an e-mail address, not read anywhere
+        bad["contacts"][0]["name"] = "Примерова Елена"  # derived from an e-mail address, not read anywhere
         result = grounding.ground_result(bad, READ)
         self.assertIsNone(result["contacts"][0]["name"])
         self.assertEqual(result["grade"], "B")  # verified phone without a name
@@ -170,11 +170,24 @@ class GroundingTest(unittest.TestCase):
 
     def test_case_endings_and_extensions_are_tolerated(self):
         data = json.loads(json.dumps(GOOD))
-        data["contacts"][0].update(name="Иванова Мария", phone="+7 (900) 000-11-33 вн.228; +7 (900) 000-22-44")
-        text = "Контакт Ивановой Марии: тел. +7 (900) 000-11-33 вн.228, сот. 8 900 000-22-44"
+        data["contacts"][0].update(name="Иванова Мария", phone="+7 (000) 000-11-33 вн.228; +7 (000) 000-22-44")
+        text = "Контакт Ивановой Марии: тел. +7 (000) 000-11-33 вн.228, сот. 8 000 000-22-44"
         result = grounding.ground_result(data, text)
         self.assertEqual(result["grade"], "A")
         self.assertEqual(result["contacts"][0]["phone"].count("+7"), 2)
+
+    def test_candidate_with_a_verified_phone_becomes_a_lead_unless_off_profile(self):
+        data = json.loads(json.dumps(GOOD))
+        data.update(verdict="candidate", grade="C")
+        data["contacts"] = [{"name": None, "role": "Приёмная", "phone": "+7 (000) 000-00-00", "email": None}]
+        result = grounding.ground_result(json.loads(json.dumps(data)), READ)
+        self.assertEqual((result["verdict"], result["grade"]), ("lead", "B"))
+        self.assertEqual(result["verdict_adjusted"], {"from": "candidate", "to": "lead"})
+        self.assertTrue(card.deliverable(result))
+        data["signal"]["profile_fit"] = False
+        off_profile = grounding.ground_result(data, READ)
+        self.assertEqual(off_profile["verdict"], "candidate")
+        self.assertFalse(card.deliverable(off_profile))
 
 
 class CardTest(unittest.TestCase):
@@ -182,11 +195,24 @@ class CardTest(unittest.TestCase):
         data = json.loads(json.dumps(GOOD))
         data["one_line"] = "<script>alert(1)</script> & сервер"
         text = card.render_card(data, "https://tenders.example.org/p")
-        self.assertIn("☎ +7 (495) 123-45-67", text)
+        self.assertIn("☎ +7 (000) 000-00-00", text)
         self.assertNotIn("<script>", text)
         self.assertIn("&amp;", text)
         self.assertIn('<a href="https://tenders.example.org/p">', text)
         self.assertNotIn("http://", card.render_card(data, "http://insecure"))
+
+    def test_directory_number_is_marked_and_a_contact_with_a_phone_is_never_cut_off(self):
+        data = json.loads(json.dumps(GOOD))
+        data["contacts"] = [{"name": None, "role": "Почта тендеров", "phone": None, "email": "tender@example.org"},
+                            {"name": None, "role": "Справочная", "phone": "+7 (000) 000-00-01", "confidence": "low"},
+                            {"name": None, "role": "Отдел B2B", "phone": None, "email": "b2b@example.org"},
+                            {"name": None, "role": "Приёмная", "phone": "+7 (000) 000-00-02", "confidence": "high"}]
+        text = card.render_card(data)
+        self.assertLess(text.index("000-00-02"), text.index("000-00-01"))  # official number first
+        self.assertLess(text.index("000-00-01"), text.index("tender@example.org"))
+        self.assertNotIn("b2b@example.org", text)  # three contacts at most
+        self.assertEqual(text.count("номер из стороннего справочника"), 1)
+        self.assertEqual(text.count("<i>"), text.count("</i>"))
 
     def test_long_card_drops_sections_but_never_breaks_tags(self):
         data = json.loads(json.dumps(GOOD))
@@ -261,6 +287,43 @@ class StoreTest(unittest.TestCase):
                         result={"verdict": "lead", "grade": "A"}, card_html="a", deliverable=True)
         self.assertEqual([row["grade"] for row in self.store.undelivered(1)], ["A", "B"])
 
+    def test_a_changed_procurement_is_known_as_an_update_and_stays_away_after_skip(self):
+        first = self.save()
+        self.assertFalse(self.store.delivered_before("t1"))
+        for chat in (7, 8):
+            self.store.claim(first, chat)
+            self.store.record_sent(first, chat, 99)
+        self.assertTrue(self.store.delivered_before("t1"))
+        self.assertFalse(self.store.delivered_before("t2"))
+        self.store.add_feedback(first, 7, 7, "skip")
+        self.store.add_feedback(first, 8, 8, "work")
+        second = self.save(fingerprint="f2")
+        self.assertEqual(self.store.undelivered(7), [])  # the manager said "Мимо": no second card
+        self.assertEqual([row["id"] for row in self.store.undelivered(8)], [second])
+        self.store.add_feedback(first, 7, 7, "work")  # the latest answer counts
+        self.assertEqual([row["id"] for row in self.store.undelivered(7)], [second])
+
+    def test_a_card_is_not_delivered_after_its_procurement_closed(self):
+        closed = self.store.save(tender_id="closed", fingerprint="f", model="m", cost_usd=0, tokens_in=0, tokens_out=0,
+                                 tool_calls=0, result=GOOD, card_html="c", deliverable=True, deadline="2026-10-04T09:00:00Z")
+        running = self.store.save(tender_id="open", fingerprint="f", model="m", cost_usd=0, tokens_in=0, tokens_out=0,
+                                  tool_calls=0, result=GOOD, card_html="o", deliverable=True, deadline="2026-10-06T09:00:00Z")
+        undated = self.save()
+        monday = "2026-10-05T06:00:00Z"  # first slot after a weekend without deliveries
+        self.assertEqual([row["id"] for row in self.store.undelivered(7, open_at=monday)], [running, undated])
+        self.assertEqual([row["id"] for row in self.store.undelivered(7)], [closed, running, undated])
+
+    def test_a_journal_older_than_the_deadline_column_is_upgraded_in_place(self):
+        import sqlite3
+        with sqlite3.connect(self.store.path) as connection:
+            connection.execute("ALTER TABLE leads DROP COLUMN deadline")
+        connection.close()
+        lead = LeadStore(self.store.path).save(tender_id="t", fingerprint="f", model="m", cost_usd=0, tokens_in=0,
+                                               tokens_out=0, tool_calls=0, result=GOOD, card_html="c", deliverable=True,
+                                               deadline="2026-10-04T09:00:00Z")
+        self.assertEqual(self.store.undelivered(7, open_at="2026-10-05T06:00:00Z"), [])
+        self.assertEqual([row["id"] for row in self.store.undelivered(7, open_at="2026-10-03T06:00:00Z")], [lead])
+
     def test_symlinked_journal_is_rejected(self):
         real = Path(self.tmp.name) / "real.sqlite3"
         real.write_bytes(b"")
@@ -297,12 +360,44 @@ class RunnerTest(unittest.TestCase):
     def test_selects_only_active_new_versions_most_urgent_first(self):
         rows = [make_row("a", deadline="2026-10-09T00:00:00Z"), make_row("b", deadline="2026-10-03T00:00:00Z"),
                 make_row("closed", status="ended"), make_row("expired", deadline="2026-09-01T00:00:00Z"),
-                make_row("done", fingerprint="f")]
-        self.store.save(tender_id="done", fingerprint="f", model="m", cost_usd=0, tokens_in=0, tokens_out=0, tool_calls=0,
+                make_row("done")]
+        self.store.save(tender_id="done", fingerprint=runner.version(rows[-1]), model="m", cost_usd=0, tokens_in=0, tokens_out=0, tool_calls=0,
                         result={"verdict": "reject"}, card_html=None, deliverable=False)
         chosen = runner.select(rows, self.store, include_history=False, now=NOW)
         self.assertEqual([row["card"]["id"] for row in chosen], ["b", "a"])
         self.assertEqual(len(runner.select(rows, self.store, include_history=True, now=NOW)), 4)
+
+    def test_purchase_with_queued_documents_waits_unless_the_deadline_is_close(self):
+        queued = [{"title": "ТЗ.pdf", "reason": "run_download_budget"}]
+        rows = [dict(make_row("waits", deadline="2026-10-09T00:00:00Z"), gaps=queued),
+                dict(make_row("urgent", deadline="2026-10-02T08:00:00Z"), gaps=queued),
+                dict(make_row("partial", deadline="2026-10-09T00:00:00Z"), gaps=[{"title": "x", "reason": "per_purchase_file_budget"}])]
+        chosen = runner.select(rows, self.store, include_history=False, now=NOW)
+        self.assertEqual([row["card"]["id"] for row in chosen], ["urgent", "partial"])
+
+    def test_new_version_of_a_delivered_procurement_is_marked_as_an_update(self):
+        runner.process(self.source([make_row()]), self.store, api_key="k", run=self.fake_run(GOOD), now=NOW)
+        first = self.store.undelivered(5)[0]
+        self.assertNotIn("🔄", first["card_html"])
+        self.store.claim(first["id"], 5)
+        self.store.record_sent(first["id"], 5, 42)
+        runner.process(self.source([make_row(deadline="2026-10-07T09:00:00Z")]), self.store, api_key="k", run=self.fake_run(GOOD), now=NOW)
+        update = self.store.undelivered(5)[0]["card_html"]
+        self.assertIn("🔄 <i>Закупка изменилась", update.splitlines()[1])
+        self.assertEqual(update.count("<i>"), update.count("</i>"))
+
+    def test_only_what_the_agent_reads_makes_a_new_version(self):
+        runner.process(self.source([make_row()]), self.store, api_key="k", run=self.fake_run(GOOD), now=NOW)
+        reread = dict(make_row(), modified="2026-10-02T00:00:00Z", gaps=[{"title": "Схема.dwg", "reason": "unsupported_format"}])
+        reread["card"]["document_state"] = "retrieved_partial"
+        self.assertEqual(runner.select([reread], self.store, include_history=False, now=NOW), [])
+        for change in (lambda row: row["card"].update(description="Нужны 4 сервера"),
+                       lambda row: row["card"]["documents"][0].update(text="ТЗ, редакция 2"),
+                       lambda row: row["card"]["documents"].append({"id": "d2", "title": "Спецификация", "text": "2 шт."}),
+                       lambda row: row["opportunity"].update(acceptance_end_date="2026-10-07T09:00:00Z")):
+            changed = make_row()
+            change(changed)
+            self.assertEqual(len(runner.select([changed], self.store, include_history=False, now=NOW)), 1)
 
     def test_grade_a_result_is_grounded_stored_and_not_repeated(self):
         models = []
@@ -357,10 +452,94 @@ class RunnerTest(unittest.TestCase):
         self.assertEqual((counts["saved"], counts["deliverable"]), (1, 0))
 
     def test_run_cost_cap_stops_further_investigations(self):
-        rows = [make_row(f"t{i}", fingerprint=f"f{i}") for i in range(4)]
+        rows = [make_row(f"t{i}") for i in range(4)]
         counts = runner.process(self.source(rows), self.store, api_key="k", run=self.fake_run(GOOD, cost=0.6),
                                 max_run_cost=1.0, fallback_model=None, now=NOW)
         self.assertEqual(counts["saved"], 2)
+
+    def test_run_outcome_is_left_for_the_health_check(self):
+        state = self.root / "state"
+        with patch.object(runner, "process", return_value={"selected": 3, "saved": 2, "failed": 1}), \
+                patch.dict("os.environ", {"OPENROUTER_API_KEY": "k"}), patch("builtins.print"):
+            self.assertEqual(runner.main(["--source", "x", "--state-root", str(state)]), 0)
+        beat = json.loads((state / "leads-research.json").read_text(encoding="utf-8"))
+        self.assertEqual((beat["selected"], beat["saved"]), (3, 2))
+        self.assertIn("at", beat)
+        with patch.object(runner, "process", side_effect=RuntimeError("proxy down")), \
+                patch.dict("os.environ", {"OPENROUTER_API_KEY": "k"}), self.assertRaises(RuntimeError):
+            runner.main(["--source", "x", "--state-root", str(state)])
+        self.assertEqual(json.loads((state / "leads-research.json").read_text(encoding="utf-8"))["error"], "RuntimeError")
+
+
+class HealthTest(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.bundles, self.state = Path(self.tmp.name) / "bundles", Path(self.tmp.name) / "state"
+        self.bundles.mkdir()
+        self.state.mkdir()
+
+    def write(self, root, name, payload):
+        (root / name).write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+
+    def test_fresh_source_and_research_report_nothing(self):
+        self.write(self.bundles, "source-refresh.json", {"collected_at": "2026-10-01T08:30:00Z"})
+        self.write(self.state, "leads-research.json", {"at": "2026-10-01T07:30:00Z", "selected": 2, "saved": 2, "failed": 0})
+        self.assertEqual(health.problems(self.bundles, self.state, NOW), {})
+        self.assertEqual(health.plan({}, {}, {}, NOW), ([], {"problems": {}, "quarantined": []}))
+
+    def test_stale_source_is_reported_once_reminded_daily_and_closed_on_recovery(self):
+        self.write(self.bundles, "source-refresh.json", {"collected_at": "2026-09-30T08:27:00Z"})
+        found = health.problems(self.bundles, self.state, NOW,
+                                source_error="SourceBoundaryError: invalid purchase description https://x.test/secret-path")
+        self.assertIn("не обновляется 24 ч", found["source"])
+        self.assertIn("invalid purchase description", found["source"])
+        self.assertNotIn("secret-path", found["source"])
+        messages, state = health.plan({}, found, {}, NOW)
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(health.plan(state, found, {}, NOW.replace(hour=15))[0], [])
+        reminder, _ = health.plan(state, found, {}, NOW.replace(day=2, hour=10))
+        self.assertIn("не устранена", reminder[0])
+        recovered, after = health.plan(state, {}, {}, NOW.replace(hour=15))
+        self.assertIn("восстановлен", recovered[0])
+        self.assertEqual(after["problems"], {})
+
+    def test_missing_source_failed_research_and_stuck_delivery_are_problems(self):
+        self.write(self.state, "leads-research.json", {"at": "2026-10-01T07:30:00Z", "selected": 4, "saved": 0, "failed": 4})
+        store = LeadStore(self.state / "leads.sqlite3")
+        lead = store.save(tender_id="t", fingerprint="f", model="m", cost_usd=0, tokens_in=0, tokens_out=0, tool_calls=0,
+                          result=GOOD, card_html="<b>card</b>", deliverable=True)
+        store.claim(lead, 5)
+        store.record_uncertain(lead, 5)
+        found = health.problems(self.bundles, self.state, NOW)
+        self.assertEqual(set(found), {"source", "research", "delivery"})
+        self.write(self.state, "leads-research.json", {"at": "2026-10-01T07:30:00Z", "error": "ConnectError"})
+        self.assertIn("ConnectError", health.problems(self.bundles, self.state, NOW)["research"])
+        self.write(self.state, "leads-research.json", {"at": "2026-09-29T07:30:00Z", "selected": 0})
+        self.assertIn("не запускалось", health.problems(self.bundles, self.state, NOW)["research"])
+
+    def test_quarantined_purchase_is_reported_once(self):
+        self.write(self.bundles, "source-quarantine.json", {"items": [{"id": "example-source:101-002", "reason": "invalid file inventory"}]})
+        skipped = health.quarantined(self.bundles)
+        messages, state = health.plan({}, {}, skipped, NOW)
+        self.assertIn("№ 101-002: invalid file inventory", messages[0])
+        self.assertEqual(health.plan(state, {}, skipped, NOW)[0], [])
+
+    def test_empty_slot_line_counts_waiting_purchases_and_is_silent_after_a_delivery(self):
+        rows = [make_row("a"), make_row("b"), make_row("old", status="ended")]
+        self.write(self.bundles, "analysis-source.json", {"collected_at": "2026-10-01T08:30:00Z", "rows": rows})
+        store = LeadStore(self.state / "leads.sqlite3")
+        lead = store.save(tender_id="a", fingerprint=runner.version(rows[0]), model="m", cost_usd=0, tokens_in=0, tokens_out=0,
+                          tool_calls=0, result=GOOD, card_html="<b>card</b>", deliverable=True)
+        line = health.slot_line(self.bundles, self.state, 5, NOW)
+        self.assertIn("Активных профильных закупок: 2, ждут исследования: 1", line)
+        self.assertIn("01.10 11:30 МСК", line)
+        store.save(tender_id="b", fingerprint=runner.version(rows[1]), model="m", cost_usd=0, tokens_in=0, tokens_out=0,
+                   tool_calls=0, result={"verdict": "reject"}, card_html=None, deliverable=False)
+        self.assertIn("все разобраны", health.slot_line(self.bundles, self.state, 5, NOW))
+        store.claim(lead, 5)
+        store.record_sent(lead, 5, 77)
+        self.assertIsNone(health.slot_line(self.bundles, self.state, 5, datetime.now(timezone.utc)))
 
 
 class ExportTest(unittest.TestCase):
@@ -369,9 +548,9 @@ class ExportTest(unittest.TestCase):
     def item(self, deadline, name="Иванов Иван", taken="2026-10-01T09:30:00Z", grade="A", **extra):
         return {"id": 1, "tender_id": "t", "grade": grade, "taken_at": taken,
                 "card_html": '<a href="https://tenders.example.org/process/x">Закупка</a>',
-                "result": {"customer": {"name": "ООО «Заказчик»"}, "signal": {"what_they_buy": "2 сервера <b>&</b>", "deadline": deadline},
-                           "contacts": [{"name": name, "role": "закупки", "phone": "+7 (495) 123-45-67", "email": "i@example.org"},
-                                        {"name": None, "role": "приёмная", "phone": "8 800 000-00-00"}],
+                "result": {"customer": {"name": "ООО «Учебный заказчик»"}, "signal": {"what_they_buy": "2 сервера <b>&</b>", "deadline": deadline},
+                           "contacts": [{"name": name, "role": "закупки", "phone": "+7 (000) 000-00-00", "email": "i@example.org"},
+                                        {"name": None, "role": "приёмная", "phone": "8 000 000-00-99"}],
                            "talk_track": {"hooks": ["один", "два"]}, **extra}}
 
     def test_deadlines_are_parsed_in_dotted_and_iso_forms(self):
@@ -400,11 +579,11 @@ class ExportTest(unittest.TestCase):
         header = [cell.value for cell in sheet[4]]
         self.assertEqual(header[:5], ["№", "Заказчик", "Контакт", "Телефон", "Срок приёма"])
         row = dict(zip(header, [cell.value for cell in sheet[5]]))
-        self.assertEqual((row["Контакт"], row["Телефон"], row["Оценка"]), ("Иванов Иван", "+7 (495) 123-45-67", "A"))
+        self.assertEqual((row["Контакт"], row["Телефон"], row["Оценка"]), ("Иванов Иван", "+7 (000) 000-00-00", "A"))
         self.assertEqual(row["Срок приёма"], datetime(2026, 10, 2, 9, 0))  # a real date, sortable in Excel
         self.assertEqual(row["Взято в работу"], datetime(2026, 10, 1, 12, 30))
         self.assertEqual(row["Что покупают"], "2 сервера <b>&</b>")
-        self.assertEqual(row["Другие контакты"], "приёмная — 8 800 000-00-00")
+        self.assertEqual(row["Другие контакты"], "приёмная — 8 000 000-00-99")
         self.assertEqual(sheet.cell(5, len(header)).hyperlink.target, "https://tenders.example.org/process/x")
         self.assertEqual(sheet.freeze_panes, "E5")
         self.assertEqual(sheet.auto_filter.ref, "A4:N5")

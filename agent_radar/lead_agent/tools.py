@@ -173,7 +173,7 @@ def fns_reports(inn: str, *, transport: httpx.BaseTransport | None = None) -> st
 
 
 class TenderTools:
-    """Raw procedure only: enrichment computed by the legacy rule pipeline is deliberately not exposed."""
+    """The procurement as published: card, buyer, dates and the text of its documents."""
 
     def __init__(self, row: dict) -> None:
         self.row = row
@@ -181,7 +181,7 @@ class TenderTools:
     def read_procedure(self) -> str:
         card, opportunity = self.row["card"], self.row.get("opportunity") or {}
         docs = [{"doc_id": d["id"], "title": d["title"], "chars": len(d["text"])}
-                for d in card.get("documents", []) if d["id"] != "opportunity:context"]
+                for d in card.get("documents", [])]
         return json.dumps({"id": card["id"], "title": card["title"], "customer_name": card.get("customer_name"),
                            "source_url": card.get("source_url"), "buyer": opportunity.get("buyer"),
                            "status": opportunity.get("status"), "publication_date": opportunity.get("publication_date"),
@@ -191,7 +191,7 @@ class TenderTools:
     def read_document(self, doc_id: str, offset: int = 0, max_chars: int = 15000) -> str:
         offset, max_chars = max(0, int(offset)), max(500, min(int(max_chars), 30000))
         for doc in self.row["card"].get("documents", []):
-            if doc["id"] == doc_id and doc_id != "opportunity:context":
+            if doc["id"] == doc_id:
                 return f"[chars {offset}-{offset + max_chars} of {len(doc['text'])}]\n" + doc["text"][offset:offset + max_chars]
         return "no such document"
 

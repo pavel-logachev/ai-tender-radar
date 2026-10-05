@@ -1,6 +1,6 @@
-"""Inline feedback buttons under lead cards, handled by the host Telegram application.
+"""Inline feedback buttons under lead cards in a caller-owned Telegram application.
 
-No second bot or poller: ``wire_feedback`` registers one CallbackQueryHandler in the plugin's existing
+No second bot or poller: ``wire_feedback`` registers one CallbackQueryHandler in the caller's existing
 ``application``. Only explicitly allowed private users may press buttons, and only for leads that were
 actually delivered to their chat.
 """

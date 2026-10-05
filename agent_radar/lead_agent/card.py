@@ -22,11 +22,20 @@ def _clip(value, size: int) -> str:
     return text if len(text) <= size else text[:size - 1].rstrip() + "…"
 
 
+def _unofficial(contact: dict) -> bool:
+    """A third-party directory hit, as the prompt requires the agent to mark it."""
+    return str(contact.get("confidence")).lower() == "low"
+
+
 def _build(result: dict, source_url: str | None, hooks: int, questions: int) -> str:
     signal, customer = result.get("signal") or {}, result.get("customer") or {}
     talk = result.get("talk_track") or {}
     lines = [f"<b>Лид {_e(result.get('grade') or '-')}</b> · {_e(_clip(customer.get('name') or '', 120))}",
              _e(_clip(result.get("one_line") or "", 400)), ""]
+    if result.get("update"):
+        # Set by the runner: a card for an earlier version of this procurement is already in the chat.
+        lines.insert(1, "🔄 <i>Закупка изменилась на площадке (срок или документы). "
+                        "Карточка по ней уже приходила, это свежая версия.</i>")
     if signal.get("what_they_buy"):
         lines.append(f"<b>Что покупают:</b> {_e(_clip(signal['what_they_buy'], 380))}")
     if signal.get("deadline"):
@@ -35,9 +44,11 @@ def _build(result: dict, source_url: str | None, hooks: int, questions: int) -> 
     if economics:
         lines.append(f"<b>Заказчик:</b> {_e(_clip(economics, 300))}")
     lines += ["", "<b>Кому звонить</b>"]
-    for contact in (result.get("contacts") or [])[:3]:
-        if not (contact.get("phone") or contact.get("email") or contact.get("name")):
-            continue
+    contacts = [contact for contact in result.get("contacts") or [] if isinstance(contact, dict)
+                and (contact.get("phone") or contact.get("email") or contact.get("name"))]
+    # Numbers first, directory hits last: the three shown contacts must include the one to dial.
+    contacts.sort(key=lambda contact: (not contact.get("phone"), _unofficial(contact)))
+    for contact in contacts[:3]:
         name = contact.get("name")
         head = _e(name) if name else _e(_clip(contact.get("role") or "контакт", 80))
         if name and contact.get("role"):
@@ -47,6 +58,8 @@ def _build(result: dict, source_url: str | None, hooks: int, questions: int) -> 
             line += f"\n  ☎ {_e(_clip(contact['phone'], 90))}"
         if contact.get("email"):
             line += f"  ✉ {_e(contact['email'])}"
+        if _unofficial(contact) and contact.get("phone"):
+            line += "\n  <i>номер из стороннего справочника, не с сайта заказчика: может быть устаревшим</i>"
         lines.append(line)
     if talk.get("opening"):
         lines += ["", f"<b>Начать так:</b> {_e(_clip(talk['opening'], 300))}"]
@@ -58,7 +71,7 @@ def _build(result: dict, source_url: str | None, hooks: int, questions: int) -> 
         lines += ["", f"⚠️ <b>Важно:</b> {_e(_clip(result['important'], 300))}"]
     footer = ""
     if source_url and source_url.startswith("https://"):
-        footer = f'\n\n<a href="{html.escape(source_url, quote=True)}">Открыть закупку</a>'
+        footer = f'\n\n<a href="{html.escape(source_url, quote=True)}">Закупка на Bidzaar</a>'
     return "\n".join(lines) + footer
 
 

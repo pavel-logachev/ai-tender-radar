@@ -3,7 +3,8 @@
 A phone, e-mail or person name that never occurs in any tool output cannot be trusted by a caller, so it is
 removed and flagged. Grades are then recomputed from the verified contacts, using exactly the definitions
 stated in the prompt (A: named person with a verified phone; B: verified phone without a name; C: no
-verified phone, which is never a ready lead: a caller needs a number).
+verified phone, which is never a ready lead: a caller needs a number). The verdict follows the grade both
+ways: no verified phone is a candidate, a verified phone on a profile purchase is a lead.
 """
 from __future__ import annotations
 
@@ -71,5 +72,10 @@ def ground_result(result: dict, tool_text: str) -> dict:
         result["grade"] = grade
         if grade == "C" and result["verdict"] == "lead":
             result["verdict"] = "candidate"
+        # The reverse case: the model found a verified phone but still filed the purchase as "nobody to call"
+        # (a reception or a directory number). A number is what the caller needs, so this is a lead.
+        elif grade != "C" and result["verdict"] == "candidate" and (result.get("signal") or {}).get("profile_fit") is not False:
+            result["verdict"] = "lead"
+            result["verdict_adjusted"] = {"from": "candidate", "to": "lead"}
     result["grounding"] = {"person_with_phone": person_with_phone, "phone_only": phone_only, "person_email_only": person_email}
     return result

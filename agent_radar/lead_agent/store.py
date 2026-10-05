@@ -1,10 +1,11 @@
 """Durable lead journal: one agent result per procurement version, at-most-once delivery, manager feedback.
 
-Same file conventions as DigestStore (private directory, regular file, no symlinks). Subscriptions and
+Same file conventions as Subscriptions (private directory, regular file, no symlinks). Subscriptions and
 authorization stay with the caller; this store never decides who may read a lead.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import sqlite3
@@ -24,6 +25,16 @@ def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def version(row: dict) -> str:
+    """Identity of one procurement version: exactly what the agent can read of it (see TenderTools)."""
+    card, opportunity = row["card"], row.get("opportunity") or {}
+    seen = [card.get("id"), card.get("title"), card.get("customer_name"), card.get("source_url"), card.get("description"),
+            opportunity.get("buyer"), opportunity.get("status"), opportunity.get("publication_date"),
+            opportunity.get("acceptance_end_date"),
+            [[d["id"], d["title"], d["text"]] for d in card.get("documents", [])]]
+    return "v2:" + hashlib.sha256(json.dumps(seen, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+
+
 class LeadStore:
     def __init__(self, path: Path) -> None:
         self.path = Path(path).absolute()
@@ -39,8 +50,10 @@ class LeadStore:
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, tender_id TEXT NOT NULL, fingerprint TEXT NOT NULL, "
                 "model TEXT NOT NULL, cost_usd REAL NOT NULL, tokens_in INTEGER NOT NULL, tokens_out INTEGER NOT NULL, "
                 "tool_calls INTEGER NOT NULL, verdict TEXT NOT NULL, grade TEXT, deliverable INTEGER NOT NULL, "
-                "result_json TEXT NOT NULL, card_html TEXT, created_at TEXT NOT NULL, "
+                "result_json TEXT NOT NULL, card_html TEXT, created_at TEXT NOT NULL, deadline TEXT, "
                 "UNIQUE(tender_id, fingerprint))")
+            if "deadline" not in {column[1] for column in connection.execute("PRAGMA table_info(leads)")}:
+                connection.execute("ALTER TABLE leads ADD COLUMN deadline TEXT")  # journals older than the column
             connection.execute(
                 "CREATE TABLE IF NOT EXISTS attempts ("
                 "tender_id TEXT NOT NULL, fingerprint TEXT NOT NULL, n INTEGER NOT NULL, "
@@ -82,15 +95,19 @@ class LeadStore:
                                       (tender_id, fingerprint)).fetchone() is not None
 
     def save(self, *, tender_id: str, fingerprint: str, model: str, cost_usd: float, tokens_in: int,
-             tokens_out: int, tool_calls: int, result: dict, card_html: str | None, deliverable: bool) -> int | None:
-        """Insert once per procurement version; returns the lead id, or None if it already existed."""
+             tokens_out: int, tool_calls: int, result: dict, card_html: str | None, deliverable: bool,
+             deadline: str | None = None) -> int | None:
+        """Insert once per procurement version; returns the lead id, or None if it already existed.
+
+        `deadline` is the end of proposal acceptance (UTC, ISO with Z) when the source published one.
+        """
         with closing(self._connection()) as connection, connection:
             cursor = connection.execute(
                 "INSERT OR IGNORE INTO leads(tender_id,fingerprint,model,cost_usd,tokens_in,tokens_out,tool_calls,"
-                "verdict,grade,deliverable,result_json,card_html,created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "verdict,grade,deliverable,result_json,card_html,created_at,deadline) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (tender_id, fingerprint, model, cost_usd, tokens_in, tokens_out, tool_calls,
                  str(result.get("verdict") or "unknown"), result.get("grade"), int(deliverable),
-                 json.dumps(result, ensure_ascii=False), card_html, _now()))
+                 json.dumps(result, ensure_ascii=False), card_html, _now(), deadline))
             return cursor.lastrowid if cursor.rowcount else None
 
     def bump_attempt(self, tender_id: str, fingerprint: str) -> int:
@@ -108,12 +125,27 @@ class LeadStore:
                                          "card_html": row[4], "result": json.loads(row[5])}
 
     # ---- delivery: claim before send, never retry an uncertain outcome ---------
-    def undelivered(self, chat_id: int, limit: int = 10) -> list[dict]:
+    def delivered_before(self, tender_id: str) -> bool:
+        """Whether a card for some version of this procurement has already reached a chat."""
+        with closing(self._connection()) as connection:
+            return connection.execute(
+                "SELECT 1 FROM deliveries d JOIN leads l ON l.id=d.lead_id WHERE l.tender_id=? AND d.state='sent' LIMIT 1",
+                (tender_id,)).fetchone() is not None
+
+    def undelivered(self, chat_id: int, limit: int = 10, *, open_at: str | None = None) -> list[dict]:
+        """Unsent cards for the chat; a procurement the chat last answered "Мимо" does not come back as an update.
+
+        With `open_at`, cards of procurements whose known deadline has passed by that moment are left out.
+        """
         with closing(self._connection()) as connection:
             rows = connection.execute(
                 "SELECT id,tender_id,grade,card_html FROM leads WHERE deliverable=1 AND card_html IS NOT NULL "
+                "AND (deadline IS NULL OR deadline>?) "
                 "AND NOT EXISTS (SELECT 1 FROM deliveries d WHERE d.lead_id=leads.id AND d.chat_id=?) "
-                "ORDER BY CASE grade WHEN 'A' THEN 0 ELSE 1 END, id LIMIT ?", (chat_id, int(limit))).fetchall()
+                "AND COALESCE((SELECT f.action FROM feedback f JOIN leads p ON p.id=f.lead_id "
+                "WHERE p.tender_id=leads.tender_id AND f.chat_id=? ORDER BY f.id DESC LIMIT 1),'')<>'skip' "
+                "ORDER BY CASE grade WHEN 'A' THEN 0 ELSE 1 END, id LIMIT ?",
+                (open_at or "", chat_id, chat_id, int(limit))).fetchall()
         return [{"id": r[0], "tender_id": r[1], "grade": r[2], "card_html": r[3]} for r in rows]
 
     def claim(self, lead_id: int, chat_id: int) -> bool:

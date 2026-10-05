@@ -1,4 +1,4 @@
-"""Read-only, bounded, versioned tender snapshots for the agent."""
+"""Read-only, bounded, versioned tender snapshots for conversational tools."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ MAX_DOC_CHARS = 200_000
 MAX_TEXT_CHUNK = 4_000
 MAX_TOTAL_TEXT_CHARS = 1_000_000
 _IDENTIFIER = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_:.\-]{0,199}$")
-_CARD_FIELDS = {"id", "title", "customer_name", "source_url", "description", "legacy_score", "documents", "document_state", "goods_state", "goods_count"}
+_CARD_FIELDS = {"id", "title", "customer_name", "source_url", "description", "documents", "document_state", "goods_state", "goods_count"}
 _DOCUMENT_STATES = {"unknown", "not_retrieved", "extraction_failed", "retrieved_partial", "available", "source_reports_none"}
 _GOODS_STATES = {"complete", "source_reports_none", "unknown", "omitted_oversized"}
 _DOCUMENT_FIELDS = {"id", "title", "text"}
@@ -57,7 +57,7 @@ class SnapshotStore:
             seen.add(row["id"])
             if not isinstance(row.get("title"), str) or not row["title"] or len(row["title"]) > 2_000:
                 raise ValueError("invalid tender title")
-            for optional_field in ("customer_name", "source_url", "description", "legacy_score"):
+            for optional_field in ("customer_name", "source_url", "description"):
                 value = row.get(optional_field)
                 if value is not None and (not isinstance(value, str) or len(value) > 10_000):
                     raise ValueError(f"invalid tender {optional_field}")
@@ -109,7 +109,6 @@ class SnapshotStore:
                     "id": row["id"],
                     "title": row["title"],
                     "customer_name": row.get("customer_name"),
-                    "legacy_score": row.get("legacy_score"),
                     "document_count": len(row["documents"]),
                     "document_state": row.get("document_state", "unknown"),
                 }
@@ -136,7 +135,6 @@ class SnapshotStore:
             "customer_name": row.get("customer_name"),
             "source_url": row.get("source_url"),
             "description": row.get("description"),
-            "legacy_score": row.get("legacy_score"),
             "document_state": row.get("document_state", "unknown"),
             "goods_state": row.get("goods_state", "unknown"),
             "goods_count": row.get("goods_count"),

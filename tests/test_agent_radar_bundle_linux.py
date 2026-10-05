@@ -8,9 +8,8 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from agent_radar.bundle import _publish_directory, materialize_bundle, open_verified_bundle
-
-FIXTURE = Path(__file__).resolve().parents[1] / "agent_radar" / "fixtures" / "synthetic_source_export.json"
+from agent_radar.bundle import _publish_directory, open_verified_bundle
+from tests.radar_fixtures import publish
 
 
 @unittest.skipUnless(os.name == "posix", "Linux-only no-replace path")
@@ -32,7 +31,7 @@ class LinuxBundlePublicationTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             target = root / "published"
-            materialize_bundle(FIXTURE, target, max_search_results=10)
+            publish(target)
             self.assertEqual(target.stat().st_mode & 0o777, 0o700)
             for file in target.iterdir():
                 self.assertEqual(file.stat().st_mode & 0o777, 0o600)

@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 
@@ -17,10 +18,12 @@ from agent_radar.lead_agent.store import LeadStore
 
 
 async def deliver(store: LeadStore, bot, recipients: list[int], *, per_chat_limit: int = 5, pause: float = 0.4,
-                  keyboard: Callable = feedback.keyboard) -> dict:
+                  keyboard: Callable = feedback.keyboard, now: datetime | None = None) -> dict:
     counts = {"sent": 0, "uncertain": 0, "rate_limited": 0}
+    # Cards wait for the next working slot; a procurement that closed in the meantime is no longer worth a call.
+    open_at = (now or datetime.now(timezone.utc)).strftime("%Y-%m-%dT%H:%M:%SZ")
     for chat_id in recipients:
-        for lead in store.undelivered(chat_id, limit=per_chat_limit):
+        for lead in store.undelivered(chat_id, limit=per_chat_limit, open_at=open_at):
             if not store.claim(lead["id"], chat_id):
                 continue
             try:
@@ -42,11 +45,11 @@ async def deliver(store: LeadStore, bot, recipients: list[int], *, per_chat_limi
 async def _main(state_root: Path, per_chat_limit: int) -> dict:
     from telegram import Bot
     from telegram.request import HTTPXRequest
-    from agent_radar.digest_store import DigestStore
+    from agent_radar.subscriptions import Subscriptions
     allowed = {int(item) for item in os.environ.get("TELEGRAM_ALLOWED_USERS", "").split(",") if item.strip().isdigit()}
-    recipients = DigestStore(state_root / "digests.sqlite3").recipients(allowed)
+    recipients = Subscriptions(state_root / "digests.sqlite3").recipients(allowed)
     store = LeadStore(state_root / "leads.sqlite3")
-    # Same proxy variable and timeouts as the native digest sender inside the host container.
+    # The operator supplies Telegram access and an optional proxy.
     request = HTTPXRequest(proxy=os.getenv("TELEGRAM_PROXY") or None, connect_timeout=30, read_timeout=30,
                            write_timeout=30, pool_timeout=30)
     async with Bot(os.environ["TELEGRAM_BOT_TOKEN"], request=request) as bot:

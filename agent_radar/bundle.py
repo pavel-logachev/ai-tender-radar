@@ -1,9 +1,9 @@
-"""Publish snapshot, provenance manifest and commit as one visible offline bundle.
+"""A published bundle: snapshot, provenance manifest and commit, visible together or not at all.
 
 The staged directory is hidden by convention and must be ignored by consumers.
 A same-parent rename publishes all three names together on a local filesystem;
 this is not a cross-process lock, power-loss durability guarantee or attestation
-of source completeness/licensing. The offline importer does not call a provider.
+of source completeness/licensing. Readers verify every hash on every read.
 """
 
 from __future__ import annotations
@@ -13,14 +13,13 @@ import errno
 import hashlib
 import json
 import os
-import shutil
 import sys
-import tempfile
 from pathlib import Path
 from typing import Any
 
-from agent_radar.snapshot import MAX_SNAPSHOT_BYTES, SnapshotStore
-from agent_radar.source_export import MAX_SOURCE_EXPORT_BYTES, _read_bounded_json, build_snapshot
+from agent_radar.snapshot import SnapshotStore
+
+MAX_MANIFEST_BYTES = 3_000_000
 
 
 class PinnedBundleStore(SnapshotStore):
@@ -38,7 +37,7 @@ class PinnedBundleStore(SnapshotStore):
                 or commit["snapshot_sha256"] != self.pinned_hash
                 or commit["manifest_sha256"] != self.manifest_hash):
             raise ValueError("bundle commit changed after verification")
-        _, manifest_bytes = _read_json_file(self.path.parent / "manifest.json", max_bytes=MAX_SOURCE_EXPORT_BYTES, label="manifest")
+        _, manifest_bytes = _read_json_file(self.path.parent / "manifest.json", max_bytes=MAX_MANIFEST_BYTES, label="manifest")
         if hashlib.sha256(manifest_bytes).hexdigest() != self.manifest_hash:
             raise ValueError("bundle manifest checksum mismatch")
         rows, observed = super()._load()
@@ -69,7 +68,7 @@ def open_verified_bundle(bundle_path: str | Path) -> tuple[SnapshotStore, dict[s
     if directory.name.startswith(".") or not directory.is_dir() or directory.is_symlink():
         raise ValueError("published bundle must be a regular, non-staging directory")
     snapshot_path = directory / "snapshot.json"
-    manifest, manifest_bytes = _read_json_file(directory / "manifest.json", max_bytes=MAX_SOURCE_EXPORT_BYTES, label="manifest")
+    manifest, manifest_bytes = _read_json_file(directory / "manifest.json", max_bytes=MAX_MANIFEST_BYTES, label="manifest")
     commit, _ = _read_json_file(directory / "commit.json", max_bytes=2_000, label="commit")
     if set(commit) != {"schema_version", "snapshot_sha256", "manifest_sha256"} or commit["schema_version"] != "agent-radar-bundle-v1":
         raise ValueError("invalid bundle commit")
@@ -103,62 +102,3 @@ def _publish_directory(stage: Path, destination: Path) -> None:
             raise OSError(code, os.strerror(code), str(destination))
     else:
         raise OSError(errno.ENOSYS, "atomic no-replace directory rename unavailable on this OS")
-
-
-def materialize_bundle(input_path: str | Path, bundle_path: str | Path, *, max_search_results: int) -> dict[str, Any]:
-    """Create a new three-file bundle with a single directory-level visibility point.
-
-    Requires a cooperating single-writer operator and a private destination parent;
-    stale hidden stages left by hard termination need a separate recovery policy.
-    """
-    input_path = Path(input_path)
-    bundle_path = Path(bundle_path)
-    if not bundle_path.name or bundle_path.name.startswith(".") or bundle_path.exists() or bundle_path.is_symlink():
-        raise ValueError("invalid bundle destination or destination already exists")
-    parent = bundle_path.parent
-    if not parent.is_dir() or parent.is_symlink():
-        raise ValueError("bundle parent must exist and be a real directory")
-    raw, export_sha256 = _read_bounded_json(input_path, max_bytes=MAX_SOURCE_EXPORT_BYTES)
-    snapshot, manifest = build_snapshot(raw, max_search_results=max_search_results)
-    snapshot_bytes = json.dumps(snapshot, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    if len(snapshot_bytes) > MAX_SNAPSHOT_BYTES:
-        raise ValueError("materialized snapshot too large")
-    manifest["snapshot_sha256"] = hashlib.sha256(snapshot_bytes).hexdigest()
-    manifest["source_export_sha256"] = export_sha256
-    manifest_bytes = json.dumps(manifest, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    commit = {"schema_version": "agent-radar-bundle-v1", "snapshot_sha256": manifest["snapshot_sha256"],
-              "manifest_sha256": hashlib.sha256(manifest_bytes).hexdigest()}
-    commit_bytes = json.dumps(commit, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    stage = Path(tempfile.mkdtemp(prefix=f".{bundle_path.name}.staging-", dir=parent))
-    try:
-        if os.name == "posix":
-            stage.chmod(0o700)
-        for name, data in (("snapshot.json", snapshot_bytes), ("manifest.json", manifest_bytes), ("commit.json", commit_bytes)):
-            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-            if hasattr(os, "O_BINARY"):
-                flags |= os.O_BINARY
-            fd = os.open(stage / name, flags, 0o600)
-            with os.fdopen(fd, "wb") as output:
-                output.write(data)
-                output.flush()
-                os.fsync(output.fileno())
-        # The stage is not a published bundle yet: compare the actual persisted
-        # snapshot, manifest and commit bytes against the values about to publish.
-        actual_hash = SnapshotStore(stage / "snapshot.json").list_candidates(limit=1)["snapshot_sha256"]
-        staged_manifest, persisted_manifest = _read_json_file(stage / "manifest.json", max_bytes=MAX_SOURCE_EXPORT_BYTES, label="manifest")
-        staged_commit, persisted_commit = _read_json_file(stage / "commit.json", max_bytes=2_000, label="commit")
-        if actual_hash != manifest["snapshot_sha256"]:
-            raise ValueError("bundle snapshot checksum mismatch before publication")
-        if persisted_manifest != manifest_bytes or staged_manifest != manifest:
-            raise ValueError("bundle manifest checksum mismatch before publication")
-        if persisted_commit != commit_bytes or staged_commit != commit:
-            raise ValueError("bundle commit checksum mismatch before publication")
-        if bundle_path.exists() or bundle_path.is_symlink():
-            raise ValueError("bundle destination already exists")
-        _publish_directory(stage, bundle_path)
-    finally:
-        # An ordinary exception cleans only our own stage. An abrupt termination
-        # may strand a hidden stage; it is never interpreted as a published bundle.
-        if stage.exists():
-            shutil.rmtree(stage)
-    return manifest

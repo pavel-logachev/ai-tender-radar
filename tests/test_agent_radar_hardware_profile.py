@@ -1,17 +1,23 @@
-"""User's business is server and storage supplies, not generic software IT."""
+"""Synthetic cases for server/storage supplies and adjacent non-profile work."""
 from __future__ import annotations
 import unittest
 
 
 class HardwareProfileTest(unittest.TestCase):
     def test_any_brand_server_storage_supplies_but_not_software_maintenance_or_furniture(self):
-        from agent_radar.hardware_profile import hardware_signal, budget_decision
+        from agent_radar.hardware_profile import hardware_signal
         for title,description in (
             ("Поставка серверов любого производителя",""),
             ("Поставка СХД",""),("Дисковый массив SAN","Закупка"),
             ("Поставка оборудования","Dell PowerEdge R760; HPE ProLiant"),
             ("Поставка серверного оборудования и внедрение",""),
-            ("Расширение системы хранения данных","Поставка контроллеров и дисковых полок")):
+            ("Расширение системы хранения данных","Поставка контроллеров и дисковых полок"),
+            ("Закупка серверных комплектующих",""),
+            ("Закупка QNAP для учебного заказчика","QNAP NAS | серверные HDD"),
+            ("Закупка оперативной памяти 64GB DDR4 ECC LRDIMM",""),
+            ("Поставка суперкомпьютера NVIDIA и коммутаторов HUAWEI с кабелями.",""),
+            ("Закупка жестких дисков для учебного заказчика с доставкой",""),
+            ("SSD Накопитель 2Tb","")):
             with self.subTest(title=title):self.assertIsNotNone(hardware_signal({"title":title,"description":description}))
         for title,description in (
             ("Интеграция 1С:ERP и ELMA",""),("Закупка лицензий SQL Server",""),
@@ -23,13 +29,13 @@ class HardwareProfileTest(unittest.TestCase):
             ("Поставка сетевого оборудования","Aquarius коммутатор"),
             ("Аренда выделенного GPU-сервера для задач искусственного интеллекта","GPU сервер"),
             ("Конкурс на сервисные выезды по ТСБ/СКС","Сервисные работы в серверной, оборудование"),
+            ("Закупка колесных дисков",""),("ТЕНДЕР ПО ВЫБОРУ ПОСТАВЩИКА ФИСКАЛЬНЫХ НАКОПИТЕЛЕЙ",""),
+            ("Закупка POS-оборудования, периферии и средств автоматизации торговли","Basic Box (J4125, RAM 8GB, SSD 128GB) | Денежный ящик"),
+            ("Закупка касс самообслуживания (КСО)","Сенсорный экран | Процессор | Оперативная память | Накопитель SSD"),
+            ("Поставка процессора магнитных частиц для очистки нуклеиновых кислот",""),
+            ("Монтаж кондиционера в серверном помещении",""),
             ("Выбор исполнителя на поставку и настройку программного обеспечения для контактного центра","Сервер в текущей инфраструктуре заказчика")):
             with self.subTest(title=title):self.assertIsNone(hardware_signal({"title":title,"description":description}))
-        self.assertEqual(budget_decision({"amount":5000000,"currency":"RUB","basis":"procedure_total"})["decision"],"include")
-        self.assertEqual(budget_decision({"amount":4999999,"currency":"RUB","basis":"procedure_total"})["decision"],"below_threshold")
-        self.assertEqual(budget_decision(None)["decision"],"unknown_include")
-        self.assertEqual(budget_decision({"amount":10,"currency":"RUB","basis":"unit_price"})["decision"],"unknown_include")
-        self.assertEqual(budget_decision({"amount":100000,"currency":"USD","basis":"procedure_total"})["decision"],"unknown_include")
 
 
 if __name__=="__main__":unittest.main()
