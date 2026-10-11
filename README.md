@@ -97,4 +97,4 @@ python scripts/apply_migrations.py --dry-run
 
 Код распространяется по [AGPL-3.0](<LICENSE>). Лицензии зависимостей — в [THIRD_PARTY_NOTICES.md](<THIRD_PARTY_NOTICES.md>).
 
-Автор — [Павел Логачев](<https://logachev.net/>). Связаться: [ai@logachev.net](<mailto:ai@logachev.net>).
+Автор — [Павел Логачев](<https://logachev.net/>). Связаться: [pavel@logachev.net](<mailto:pavel@logachev.net>).
