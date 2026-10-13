@@ -2,6 +2,8 @@
 
 # AI Tender Radar
 
+[![Проверки в CI](https://img.shields.io/github/actions/workflow/status/pavel-logachev/ai-tender-radar/quality.yml?branch=main&style=flat-square&labelColor=0b0f14&label=CI)](https://github.com/pavel-logachev/ai-tender-radar/actions/workflows/quality.yml) [![Лицензия](https://img.shields.io/github/license/pavel-logachev/ai-tender-radar?style=flat-square&labelColor=0b0f14&label=%D0%BB%D0%B8%D1%86%D0%B5%D0%BD%D0%B7%D0%B8%D1%8F&color=7f99ad)](<LICENSE>)
+
 **AI Tender Radar находит закупки серверов и систем хранения данных на Bidzaar и присылает менеджеру в Telegram карточку для звонка: что покупают, к какому сроку и с кем связаться.**
 
 [Статья о проекте](<https://logachev.net/journal/ii-agent-dlya-generacii-lidov-zakupki/>) · [Архитектура](<docs/ARCHITECTURE.md>) · [Что опубликовано](<docs/PUBLICATION_BOUNDARY.md>) · [Проверка](<docs/VERIFICATION.md>)
