@@ -94,10 +94,10 @@ python scripts/apply_migrations.py --dry-run
 
 ## Нужно похожее решение?
 
-Проект сделал [Павел Логачев](https://github.com/pavel-logachev). Делаю сайты, веб-сервисы, Telegram-ботов, приложения и автоматизацию под задачу: сам разбираю, делаю и запускаю. 20 лет в ИТ: инженер, затем руководитель проектов. Расскажите о задаче [на почту](mailto:ai@logachev.net) или [в Telegram](https://t.me/pavel_logachev) — разбор на 20–30 минут бесплатный, готовое ТЗ не нужно. Цены и другие проекты — на [logachev.net](https://logachev.net/) и [в профиле](https://github.com/pavel-logachev).
+Проект сделал [Павел Логачев](https://github.com/pavel-logachev). Делаю сайты, веб-сервисы, Telegram-ботов, приложения и автоматизацию под задачу: сам разбираю, делаю и запускаю. 20 лет в ИТ: инженер, затем руководитель проектов. Расскажите о задаче [на почту](mailto:pavel@logachev.net) или [в Telegram](https://t.me/pavel_logachev) — разбор на 20–30 минут бесплатный, готовое ТЗ не нужно. Цены и другие проекты — на [logachev.net](https://logachev.net/) и [в профиле](https://github.com/pavel-logachev).
 
 ## Лицензия и автор
 
 Код распространяется по [AGPL-3.0](<LICENSE>). Лицензии зависимостей — в [THIRD_PARTY_NOTICES.md](<THIRD_PARTY_NOTICES.md>).
 
-Автор — [Павел Логачев](<https://logachev.net/>). Связаться: [ai@logachev.net](<mailto:ai@logachev.net>).
+Автор — [Павел Логачев](<https://logachev.net/>). Связаться: [pavel@logachev.net](<mailto:pavel@logachev.net>).
