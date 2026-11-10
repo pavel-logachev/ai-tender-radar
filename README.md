@@ -1,4 +1,4 @@
-<picture><source media="(max-width: 767px)" srcset="docs/assets/ai-tender-radar-banner-mobile.png"><img src="docs/assets/ai-tender-radar-banner.png" alt="От закупки серверов и СХД через проверку контактов — к карточке для звонка в Telegram."></picture>
+<picture><source media="(max-width: 767px)" srcset="docs/assets/ai-tender-radar-banner-mobile.png"><img src="docs/assets/ai-tender-radar-banner.png" alt="От закупки серверов и СХД через проверку контактов – к карточке для звонка в Telegram."></picture>
 
 # AI Tender Radar
 
@@ -31,7 +31,7 @@
 
 Код ограничивает число шагов и расходы на модель. Перед сохранением результата [проверка контактов](<agent_radar/lead_agent/grounding.py>) механически сверяет цифры номера, имя и почту с текстами, которые агент действительно прочитал. Проверка отсекает номера, чье 10-значное ядро не найдено в слитной последовательности цифр этих текстов; имя и почта удаляются, если не проходят свою сверку. Журнал и доставка в Telegram тоже работают в коде.
 
-<picture><source media="(max-width: 767px)" srcset="docs/assets/ai-tender-radar-how-it-works-mobile.png"><img src="docs/assets/ai-tender-radar-how-it-works.png" alt="Агент изучает документы из Bidzaar, код сверяет контакты с текстами, карточка идет менеджеру в Telegram; без телефона — только журнал."></picture>
+<picture><source media="(max-width: 767px)" srcset="docs/assets/ai-tender-radar-how-it-works-mobile.png"><img src="docs/assets/ai-tender-radar-how-it-works.png" alt="Агент изучает документы из Bidzaar, код сверяет контакты с текстами, карточка идет менеджеру в Telegram; без телефона – только журнал."></picture>
 
 Подробности, включая версии закупок, повторные отправки и обработку сбоев, — в [архитектуре](<docs/ARCHITECTURE.md>).
 
@@ -94,7 +94,7 @@ python scripts/apply_migrations.py --dry-run
 
 ## Нужно похожее решение?
 
-Проект сделал [Павел Логачев](https://github.com/pavel-logachev). Делаю сайты, веб-сервисы, Telegram-ботов, приложения и автоматизацию под задачу: сам разбираю, делаю и запускаю. 20 лет в ИТ: инженер, затем руководитель проектов. Расскажите о задаче [на почту](mailto:pavel@logachev.net) или [в Telegram](https://t.me/pavel_logachev) — разбор на 20–30 минут бесплатный, готовое ТЗ не нужно. Цены и другие проекты — на [logachev.net](https://logachev.net/) и [в профиле](https://github.com/pavel-logachev).
+Проект сделал [Павел Логачев](https://github.com/pavel-logachev). Делаю сайты, веб-сервисы, Telegram-ботов, приложения и автоматизацию под задачу. Код пишут ИИ-агенты под моим руководством, я разбираю задачу, проверяю и запускаю. 20 лет в ИТ: инженер, затем руководитель проектов. Расскажите о задаче [на почту](mailto:pavel@logachev.net) или [в Telegram](https://t.me/pavel_logachev) — разбор на 20–30 минут бесплатный, готовое ТЗ не нужно. Цены и другие проекты — на [logachev.net](https://logachev.net/) и [в профиле](https://github.com/pavel-logachev).
 
 ## Лицензия и автор
 
